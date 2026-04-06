@@ -1,5 +1,5 @@
 import os
-from flask import Flask
+from flask import Flask, redirect, request
 
 app = Flask(__name__)
 
@@ -13,7 +13,28 @@ def home():
 
 @app.route("/login")
 def login():
-    return "Login route funguje."
+    client_id = os.getenv("STRAVA_CLIENT_ID")
+    redirect_uri = request.host_url.rstrip("/") + "/exchange_token"
+
+    auth_url = (
+        "https://www.strava.com/oauth/authorize"
+        f"?client_id={client_id}"
+        "&response_type=code"
+        f"&redirect_uri={redirect_uri}"
+        "&approval_prompt=auto"
+        "&scope=read,activity:read_all"
+    )
+
+    return redirect(auth_url)
+
+@app.route("/exchange_token")
+def exchange_token():
+    code = request.args.get("code")
+
+    if code:
+        return f"Strava vratila autorizacni kod: {code}"
+    else:
+        return "Strava nevratila autorizacni kod."
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=10000)
