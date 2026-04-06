@@ -35,6 +35,13 @@ def get_activity_detail(access_token, activity_id):
     )
     return response.json()
 
+def get_activity_zones(access_token, activity_id):
+    response = requests.get(
+        f"https://www.strava.com/api/v3/activities/{activity_id}/zones",
+        headers={"Authorization": f"Bearer {access_token}"},
+    )
+    return response.json()
+
 @app.route("/")
 def home():
     token_data = get_access_token()
@@ -52,6 +59,7 @@ def home():
     activity_id = latest_activity.get("id")
 
     detail = get_activity_detail(access_token, activity_id)
+    zones = get_activity_zones(access_token, activity_id)
 
     name = detail.get("name", "Bez nazvu")
     sport_type = detail.get("sport_type", "Neznamy typ")
@@ -62,6 +70,17 @@ def home():
     max_heartrate = detail.get("max_heartrate", "neni")
     calories = detail.get("calories", "neni")
     elevation = detail.get("total_elevation_gain", 0)
+
+    zone_html = "<h3>Tepove zony</h3><ul>"
+
+    for zone_group in zones:
+        if zone_group.get("type") == "heartrate":
+            distribution = zone_group.get("distribution_buckets", [])
+            for i, bucket in enumerate(distribution, start=1):
+                seconds = bucket.get("time", 0)
+                zone_html += f"<li>Strava zona {i}: {seconds} s</li>"
+
+    zone_html += "</ul>"
 
     return (
         "<h1>Strv Excel Projekt</h1>"
@@ -76,6 +95,7 @@ def home():
         f"<p>Kalorie: {calories}</p>"
         f"<p>Stoupani: {elevation} m</p>"
         f"<p>Strava ID aktivity: {activity_id}</p>"
+        f"{zone_html}"
     )
 
 if __name__ == "__main__":
