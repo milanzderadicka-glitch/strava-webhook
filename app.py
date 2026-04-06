@@ -28,6 +28,13 @@ def get_athlete_data(access_token):
     )
     return response.json()
 
+def get_recent_activities(access_token):
+    response = requests.get(
+        "https://www.strava.com/api/v3/athlete/activities?per_page=5",
+        headers={"Authorization": f"Bearer {access_token}"},
+    )
+    return response.json()
+
 @app.route("/")
 def home():
     token_data = get_access_token()
@@ -37,17 +44,33 @@ def home():
         return f"Pripojeni se nepodarilo. Odpoved Stravy: {token_data}"
 
     athlete_data = get_athlete_data(access_token)
+    activities = get_recent_activities(access_token)
 
     firstname = athlete_data.get("firstname", "")
     lastname = athlete_data.get("lastname", "")
     athlete_id = athlete_data.get("id", "")
 
-    return (
+    html = (
         "<h1>Strv Excel Projekt</h1>"
         "<p>Automaticke pripojeni ke Strave funguje.</p>"
         f"<p>Sportovec: {firstname} {lastname}</p>"
         f"<p>Athlete ID: {athlete_id}</p>"
+        "<h2>Posledni aktivity</h2>"
+        "<ul>"
     )
+
+    for activity in activities:
+        name = activity.get("name", "Bez nazvu")
+        sport_type = activity.get("sport_type", "Neznamy typ")
+        start_date = activity.get("start_date_local", "Neznamy cas")
+        distance_m = activity.get("distance", 0)
+        distance_km = round(distance_m / 1000, 2)
+
+        html += f"<li>{start_date} | {sport_type} | {name} | {distance_km} km</li>"
+
+    html += "</ul>"
+
+    return html
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=10000)
