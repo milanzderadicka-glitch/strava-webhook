@@ -1,67 +1,46 @@
 import os
 import requests
-from flask import Flask, redirect, request
+from flask import Flask
 
 app = Flask(__name__)
 
-@app.route("/")
-def home():
-    return """
-    <h1>Strv Excel Projekt</h1>
-    <p>Aplikace běží a vidí Strava údaje.</p>
-    <p><a href="/login">Přihlásit se ke Stravě</a></p>
-    """
-
-@app.route("/login")
-def login():
-    client_id = os.getenv("STRAVA_CLIENT_ID")
-    redirect_uri = request.host_url.rstrip("/") + "/exchange_token"
-
-    auth_url = (
-        "https://www.strava.com/oauth/authorize"
-        f"?client_id={client_id}"
-        "&response_type=code"
-        f"&redirect_uri={redirect_uri}"
-        "&approval_prompt=auto"
-        "&scope=read,activity:read_all"
-    )
-
-    return redirect(auth_url)
-
-@app.route("/exchange_token")
-def exchange_token():
-    code = request.args.get("code")
-
-    if not code:
-        return "Strava nevratila autorizacni kod."
-
+def get_access_token():
     client_id = os.getenv("STRAVA_CLIENT_ID")
     client_secret = os.getenv("STRAVA_CLIENT_SECRET")
+    refresh_token = os.getenv("STRAVA_REFRESH_TOKEN")
 
     response = requests.post(
         "https://www.strava.com/oauth/token",
         data={
             "client_id": client_id,
             "client_secret": client_secret,
-            "code": code,
-            "grant_type": "authorization_code",
+            "refresh_token": refresh_token,
+            "grant_type": "refresh_token",
         },
     )
 
-    data = response.json()
+    return response.json()
 
-    access_token = data.get("access_token")
-    refresh_token = data.get("refresh_token")
-    athlete = data.get("athlete", {})
+@app.route("/")
+def home():
+    token_data = get_access_token()
 
-    if access_token and refresh_token:
+    access_token = token_data.get("access_token")
+    athlete = token_data.get("athlete", {})
+
+    if access_token:
+        firstname = athlete.get("firstname", "")
+        lastname = athlete.get("lastname", "")
+        athlete_id = athlete.get("id", "")
+
         return (
-            "Pripojeni ke Strave probehlo uspesne.<br>"
-            f"Athlete ID: {athlete.get('id')}<br>"
-            "Access token i refresh token byly ziskany."
+            "<h1>Strv Excel Projekt</h1>"
+            "<p>Automaticke pripojeni ke Strave funguje.</p>"
+            f"<p>Sportovec: {firstname} {lastname}</p>"
+            f"<p>Athlete ID: {athlete_id}</p>"
         )
     else:
-        return f"Token se nepodarilo ziskat. Odpoved Stravy: {data}"
+        return f"Pripojeni se nepodarilo. Odpoved Stravy: {token_data}"
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=10000)
