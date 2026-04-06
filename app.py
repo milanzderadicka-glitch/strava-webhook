@@ -21,16 +21,16 @@ def get_access_token():
 
     return response.json()
 
-def get_athlete_data(access_token):
+def get_recent_activities(access_token):
     response = requests.get(
-        "https://www.strava.com/api/v3/athlete",
+        "https://www.strava.com/api/v3/athlete/activities?per_page=5",
         headers={"Authorization": f"Bearer {access_token}"},
     )
     return response.json()
 
-def get_recent_activities(access_token):
+def get_activity_detail(access_token, activity_id):
     response = requests.get(
-        "https://www.strava.com/api/v3/athlete/activities?per_page=5",
+        f"https://www.strava.com/api/v3/activities/{activity_id}",
         headers={"Authorization": f"Bearer {access_token}"},
     )
     return response.json()
@@ -43,34 +43,40 @@ def home():
     if not access_token:
         return f"Pripojeni se nepodarilo. Odpoved Stravy: {token_data}"
 
-    athlete_data = get_athlete_data(access_token)
     activities = get_recent_activities(access_token)
 
-    firstname = athlete_data.get("firstname", "")
-    lastname = athlete_data.get("lastname", "")
-    athlete_id = athlete_data.get("id", "")
+    if not activities:
+        return "Nebyla nalezena zadna aktivita."
 
-    html = (
+    latest_activity = activities[0]
+    activity_id = latest_activity.get("id")
+
+    detail = get_activity_detail(access_token, activity_id)
+
+    name = detail.get("name", "Bez nazvu")
+    sport_type = detail.get("sport_type", "Neznamy typ")
+    start_date = detail.get("start_date_local", "Neznamy cas")
+    distance_km = round(detail.get("distance", 0) / 1000, 2)
+    moving_time = detail.get("moving_time", 0)
+    average_heartrate = detail.get("average_heartrate", "neni")
+    max_heartrate = detail.get("max_heartrate", "neni")
+    calories = detail.get("calories", "neni")
+    elevation = detail.get("total_elevation_gain", 0)
+
+    return (
         "<h1>Strv Excel Projekt</h1>"
-        "<p>Automaticke pripojeni ke Strave funguje.</p>"
-        f"<p>Sportovec: {firstname} {lastname}</p>"
-        f"<p>Athlete ID: {athlete_id}</p>"
-        "<h2>Posledni aktivity</h2>"
-        "<ul>"
+        "<h2>Detail posledni aktivity</h2>"
+        f"<p>Nazev: {name}</p>"
+        f"<p>Typ aktivity: {sport_type}</p>"
+        f"<p>Datum a cas: {start_date}</p>"
+        f"<p>Vzdalenost: {distance_km} km</p>"
+        f"<p>Moving time (sekundy): {moving_time}</p>"
+        f"<p>Prumerna TF: {average_heartrate}</p>"
+        f"<p>Maximalni TF: {max_heartrate}</p>"
+        f"<p>Kalorie: {calories}</p>"
+        f"<p>Stoupani: {elevation} m</p>"
+        f"<p>Strava ID aktivity: {activity_id}</p>"
     )
-
-    for activity in activities:
-        name = activity.get("name", "Bez nazvu")
-        sport_type = activity.get("sport_type", "Neznamy typ")
-        start_date = activity.get("start_date_local", "Neznamy cas")
-        distance_m = activity.get("distance", 0)
-        distance_km = round(distance_m / 1000, 2)
-
-        html += f"<li>{start_date} | {sport_type} | {name} | {distance_km} km</li>"
-
-    html += "</ul>"
-
-    return html
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=10000)
