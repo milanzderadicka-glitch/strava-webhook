@@ -5,13 +5,15 @@ app = Flask(__name__)
 
 @app.route("/")
 def home():
-    client_id = os.getenv("STRAVA_CLIENT_ID")
-    client_secret = os.getenv("STRAVA_CLIENT_SECRET")
+    return """
+    <h1>Strv Excel Projekt</h1>
+    <p>Aplikace běží a vidí Strava údaje.</p>
+    <p><a href="/login">Přihlásit se ke Stravě</a></p>
+    """
 
-    if client_id and client_secret:
-        return "Aplikace běží a vidi Strava udaje."
-    else:
-        return "Aplikace běží, ale nevidi Strava udaje."
+@app.route("/login")
+def login():
+    return "Login route funguje."
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=10000)
