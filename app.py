@@ -58,8 +58,7 @@ def exchange_token():
         return (
             "Pripojeni ke Strave probehlo uspesne.<br>"
             f"Athlete ID: {athlete.get('id')}<br>"
-            "Access token i refresh token byly ziskany.<br><br>"
-            f"Refresh token: {refresh_token}"
+            "Access token i refresh token byly ziskany."
         )
     else:
         return f"Token se nepodarilo ziskat. Odpoved Stravy: {data}"
