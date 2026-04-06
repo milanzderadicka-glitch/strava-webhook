@@ -21,26 +21,33 @@ def get_access_token():
 
     return response.json()
 
+def get_athlete_data(access_token):
+    response = requests.get(
+        "https://www.strava.com/api/v3/athlete",
+        headers={"Authorization": f"Bearer {access_token}"},
+    )
+    return response.json()
+
 @app.route("/")
 def home():
     token_data = get_access_token()
-
     access_token = token_data.get("access_token")
-    athlete = token_data.get("athlete", {})
 
-    if access_token:
-        firstname = athlete.get("firstname", "")
-        lastname = athlete.get("lastname", "")
-        athlete_id = athlete.get("id", "")
-
-        return (
-            "<h1>Strv Excel Projekt</h1>"
-            "<p>Automaticke pripojeni ke Strave funguje.</p>"
-            f"<p>Sportovec: {firstname} {lastname}</p>"
-            f"<p>Athlete ID: {athlete_id}</p>"
-        )
-    else:
+    if not access_token:
         return f"Pripojeni se nepodarilo. Odpoved Stravy: {token_data}"
+
+    athlete_data = get_athlete_data(access_token)
+
+    firstname = athlete_data.get("firstname", "")
+    lastname = athlete_data.get("lastname", "")
+    athlete_id = athlete_data.get("id", "")
+
+    return (
+        "<h1>Strv Excel Projekt</h1>"
+        "<p>Automaticke pripojeni ke Strave funguje.</p>"
+        f"<p>Sportovec: {firstname} {lastname}</p>"
+        f"<p>Athlete ID: {athlete_id}</p>"
+    )
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=10000)
