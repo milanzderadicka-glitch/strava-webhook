@@ -1,4 +1,5 @@
 import os
+import requests
 from flask import Flask, redirect, request
 
 app = Flask(__name__)
@@ -31,10 +32,36 @@ def login():
 def exchange_token():
     code = request.args.get("code")
 
-    if code:
-        return f"Strava vratila autorizacni kod: {code}"
-    else:
+    if not code:
         return "Strava nevratila autorizacni kod."
+
+    client_id = os.getenv("STRAVA_CLIENT_ID")
+    client_secret = os.getenv("STRAVA_CLIENT_SECRET")
+
+    response = requests.post(
+        "https://www.strava.com/oauth/token",
+        data={
+            "client_id": client_id,
+            "client_secret": client_secret,
+            "code": code,
+            "grant_type": "authorization_code",
+        },
+    )
+
+    data = response.json()
+
+    access_token = data.get("access_token")
+    refresh_token = data.get("refresh_token")
+    athlete = data.get("athlete", {})
+
+    if access_token and refresh_token:
+        return (
+            "Pripojeni ke Strave probehlo uspesne.<br>"
+            f"Athlete ID: {athlete.get('id')}<br>"
+            "Access token i refresh token byly ziskany."
+        )
+    else:
+        return f"Token se nepodarilo ziskat. Odpoved Stravy: {data}"
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=10000)
