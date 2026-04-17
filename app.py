@@ -1,6 +1,6 @@
 import os
 import requests
-from flask import Flask
+from flask import Flask, redirect, request
 
 app = Flask(__name__)
 
@@ -22,6 +22,19 @@ def get_microsoft_token():
     )
 
     return response.json()
+
+def get_microsoft_auth_url():
+    client_id = os.getenv("MS_CLIENT_ID")
+    redirect_uri = "https://strava-webhook-l8mx.onrender.com/ms-callback"
+
+    return (
+        "https://login.microsoftonline.com/common/oauth2/v2.0/authorize"
+        f"?client_id={client_id}"
+        "&response_type=code"
+        f"&redirect_uri={redirect_uri}"
+        "&response_mode=query"
+        "&scope=offline_access User.Read Files.ReadWrite"
+    )
 
 def get_drive_info(access_token):
     response = requests.get(
@@ -163,6 +176,19 @@ def test_drive():
         )
     else:
         return f"Pristup k OneDrivu selhal. Odpoved: {drive_data}"
+
+@app.route("/login-ms")
+def login_ms():
+    return redirect(get_microsoft_auth_url())
+
+@app.route("/ms-callback")
+def ms_callback():
+    code = request.args.get("code")
+
+    if code:
+        return f"Microsoft vratil autorizacni kod: {code}"
+    else:
+        return "Microsoft nevratil autorizacni kod."
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=10000)
