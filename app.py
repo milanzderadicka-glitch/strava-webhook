@@ -4,6 +4,25 @@ from flask import Flask
 
 app = Flask(__name__)
 
+def get_microsoft_token():
+    tenant_id = os.getenv("MS_TENANT_ID")
+    client_id = os.getenv("MS_CLIENT_ID")
+    client_secret = os.getenv("MS_CLIENT_SECRET")
+
+    token_url = f"https://login.microsoftonline.com/{tenant_id}/oauth2/v2.0/token"
+
+    response = requests.post(
+        token_url,
+        data={
+            "client_id": client_id,
+            "client_secret": client_secret,
+            "scope": "https://graph.microsoft.com/.default",
+            "grant_type": "client_credentials",
+        },
+    )
+
+    return response.json()
+
 def get_access_token():
     client_id = os.getenv("STRAVA_CLIENT_ID")
     client_secret = os.getenv("STRAVA_CLIENT_SECRET")
@@ -97,6 +116,18 @@ def home():
         f"<p>Strava ID aktivity: {activity_id}</p>"
         f"{zone_html}"
     )
+@app.route("/test-ms")
+def test_ms():
+    token_data = get_microsoft_token()
+    access_token = token_data.get("access_token")
 
+    if access_token:
+        return (
+            "<h1>Strv Excel Projekt</h1>"
+            "<p>Microsoft prihlaseni funguje.</p>"
+            "<p>Access token byl uspesne ziskan.</p>"
+        )
+    else:
+        return f"Microsoft prihlaseni selhalo. Odpoved: {token_data}"
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=10000)
