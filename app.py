@@ -23,6 +23,13 @@ def get_microsoft_token():
 
     return response.json()
 
+def get_drive_info(access_token):
+    response = requests.get(
+        "https://graph.microsoft.com/v1.0/me/drive",
+        headers={"Authorization": f"Bearer {access_token}"},
+    )
+    return response.json()
+
 def get_access_token():
     client_id = os.getenv("STRAVA_CLIENT_ID")
     client_secret = os.getenv("STRAVA_CLIENT_SECRET")
@@ -129,5 +136,33 @@ def test_ms():
         )
     else:
         return f"Microsoft prihlaseni selhalo. Odpoved: {token_data}"
+
+@app.route("/test-drive")
+def test_drive():
+    token_data = get_microsoft_token()
+    access_token = token_data.get("access_token")
+
+    if not access_token:
+        return f"Microsoft prihlaseni selhalo. Odpoved: {token_data}"
+
+    drive_data = get_drive_info(access_token)
+
+    drive_id = drive_data.get("id")
+    drive_type = drive_data.get("driveType")
+    owner = drive_data.get("owner", {})
+    user = owner.get("user", {})
+    display_name = user.get("displayName", "")
+
+    if drive_id:
+        return (
+            "<h1>Strv Excel Projekt</h1>"
+            "<p>Pristup k OneDrivu funguje.</p>"
+            f"<p>Drive ID: {drive_id}</p>"
+            f"<p>Drive type: {drive_type}</p>"
+            f"<p>Vlastnik: {display_name}</p>"
+        )
+    else:
+        return f"Pristup k OneDrivu selhal. Odpoved: {drive_data}"
+
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=10000)
