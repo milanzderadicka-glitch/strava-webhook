@@ -35,6 +35,26 @@ def get_microsoft_auth_url():
         "&response_mode=query"
         "&scope=offline_access User.Read Files.ReadWrite"
     )
+def exchange_microsoft_code(code):
+    tenant_id = os.getenv("MS_TENANT_ID")
+    client_id = os.getenv("MS_CLIENT_ID")
+    client_secret = os.getenv("MS_CLIENT_SECRET")
+    redirect_uri = "https://strava-webhook-l8mx.onrender.com/ms-callback"
+
+    token_url = f"https://login.microsoftonline.com/{tenant_id}/oauth2/v2.0/token"
+
+    response = requests.post(
+        token_url,
+        data={
+            "client_id": client_id,
+            "client_secret": client_secret,
+            "code": code,
+            "redirect_uri": redirect_uri,
+            "grant_type": "authorization_code",
+        },
+    )
+
+    return response.json()
 
 def get_drive_info(access_token):
     response = requests.get(
@@ -185,10 +205,21 @@ def login_ms():
 def ms_callback():
     code = request.args.get("code")
 
-    if code:
-        return f"Microsoft vratil autorizacni kod: {code}"
-    else:
+    if not code:
         return "Microsoft nevratil autorizacni kod."
+
+    token_data = exchange_microsoft_code(code)
+
+    access_token = token_data.get("access_token")
+    refresh_token = token_data.get("refresh_token")
+
+    if access_token and refresh_token:
+        return (
+            "Microsoft prihlaseni probehlo uspesne.<br>"
+            "Access token i refresh token byly ziskany."
+        )
+    else:
+        return f"Ziskani Microsoft tokenu selhalo. Odpoved: {token_data}""
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=10000)
