@@ -220,7 +220,7 @@ def ms_callback():
             "Access token i refresh token byly ziskany."
         )
     else:
-        return f"Ziskani Microsoft tokenu selhalo. Odpoved: {token_data}""
+        return f"Ziskani Microsoft tokenu selhalo. Odpoved: {token_data}"
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=10000)
