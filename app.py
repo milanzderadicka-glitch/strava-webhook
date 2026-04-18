@@ -201,6 +201,7 @@ def test_drive():
 def login_ms():
     return redirect(get_microsoft_auth_url())
 
+
 @app.route("/ms-callback")
 def ms_callback():
     code = request.args.get("code")
