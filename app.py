@@ -41,7 +41,7 @@ def exchange_microsoft_code(code):
     client_secret = os.getenv("MS_CLIENT_SECRET")
     redirect_uri = "https://strava-webhook-l8mx.onrender.com/ms-callback"
 
-    token_url = f"https://login.microsoftonline.com/{tenant_id}/oauth2/v2.0/token"
+    token_url = "https://login.microsoftonline.com/common/oauth2/v2.0/token"
 
     response = requests.post(
         token_url,
