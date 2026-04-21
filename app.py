@@ -216,10 +216,9 @@ def ms_callback():
 
     if access_token and refresh_token:
         return (
-            "Microsoft prihlaseni probehlo uspesne.<br>"
-            "Access token i refresh token byly ziskany.<br><br>"
-            f"Microsoft refresh token: {refresh_token}"
-        )
+        "Microsoft prihlaseni probehlo uspesne.<br>"
+        "Access token i refresh token byly ziskany."
+    )
     else:
         return f"Ziskani Microsoft tokenu selhalo. Odpoved: {token_data}"
 if __name__ == "__main__":
