@@ -56,6 +56,28 @@ def exchange_microsoft_code(code):
 
     return response.json()
 
+def refresh_microsoft_token():
+    client_id = os.getenv("MS_CLIENT_ID")
+    client_secret = os.getenv("MS_CLIENT_SECRET")
+    refresh_token = os.getenv("MS_REFRESH_TOKEN")
+    redirect_uri = "https://strava-webhook-l8mx.onrender.com/ms-callback"
+
+    token_url = "https://login.microsoftonline.com/common/oauth2/v2.0/token"
+
+    response = requests.post(
+        token_url,
+        data={
+            "client_id": client_id,
+            "client_secret": client_secret,
+            "refresh_token": refresh_token,
+            "redirect_uri": redirect_uri,
+            "grant_type": "refresh_token",
+            "scope": "offline_access User.Read Files.ReadWrite",
+        },
+    )
+
+    return response.json()
+
 def get_drive_info(access_token):
     response = requests.get(
         "https://graph.microsoft.com/v1.0/me/drive",
