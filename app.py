@@ -259,5 +259,33 @@ def test_ms_refresh():
         )
     else:
         return f"Obnoveni Microsoft tokenu selhalo. Odpoved: {token_data}"
+
+@app.route("/test-drive-refresh")
+def test_drive_refresh():
+    token_data = refresh_microsoft_token()
+
+    access_token = token_data.get("access_token")
+
+    if not access_token:
+        return f"Obnoveni Microsoft tokenu selhalo. Odpoved: {token_data}"
+
+    drive_data = get_drive_info(access_token)
+
+    drive_id = drive_data.get("id")
+    drive_type = drive_data.get("driveType")
+    owner = drive_data.get("owner", {})
+    user = owner.get("user", {})
+    display_name = user.get("displayName", "")
+
+    if drive_id:
+        return (
+            "<h1>Strv Excel Projekt</h1>"
+            "<p>Pristup k OneDrivu pres refresh token funguje.</p>"
+            f"<p>Drive ID: {drive_id}</p>"
+            f"<p>Drive type: {drive_type}</p>"
+            f"<p>Vlastnik: {display_name}</p>"
+        )
+    else:
+        return f"Pristup k OneDrivu pres refresh token selhal. Odpoved: {drive_data}"
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=10000)
