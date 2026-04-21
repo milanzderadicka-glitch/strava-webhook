@@ -287,5 +287,18 @@ def test_drive_refresh():
         )
     else:
         return f"Pristup k OneDrivu pres refresh token selhal. Odpoved: {drive_data}"
+
+@app.route("/test-excel-link")
+def test_excel_link():
+    excel_url = os.getenv("EXCEL_SHARE_URL")
+
+    if excel_url:
+        return (
+            "<h1>Strv Excel Projekt</h1>"
+            "<p>EXCEL_SHARE_URL je ulozeny.</p>"
+            f"<p>{excel_url}</p>"
+        )
+    else:
+        return "EXCEL_SHARE_URL neni ulozeny."
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=10000)
