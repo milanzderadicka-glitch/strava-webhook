@@ -243,5 +243,21 @@ def ms_callback():
     )
     else:
         return f"Ziskani Microsoft tokenu selhalo. Odpoved: {token_data}"
+
+@app.route("/test-ms-refresh")
+def test_ms_refresh():
+    token_data = refresh_microsoft_token()
+
+    access_token = token_data.get("access_token")
+    new_refresh_token = token_data.get("refresh_token")
+
+    if access_token and new_refresh_token:
+        return (
+            "<h1>Strv Excel Projekt</h1>"
+            "<p>Microsoft refresh token funguje.</p>"
+            "<p>Novy access token i novy refresh token byly ziskany.</p>"
+        )
+    else:
+        return f"Obnoveni Microsoft tokenu selhalo. Odpoved: {token_data}"
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=10000)
