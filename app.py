@@ -349,5 +349,31 @@ def test_shared_file():
         )
     else:
         return f"Nepodarilo se nacist metadata souboru. Odpoved: {file_data}"
+
+@app.route("/test-file-id")
+def test_file_id():
+    token_data = refresh_microsoft_token()
+
+    access_token = token_data.get("access_token")
+
+    if not access_token:
+        return f"Obnoveni Microsoft tokenu selhalo. Odpoved: {token_data}"
+
+    file_data = get_file_info_by_id(access_token)
+
+    file_name = file_data.get("name")
+    file_id = file_data.get("id")
+    web_url = file_data.get("webUrl")
+
+    if file_id:
+        return (
+            "<h1>Strv Excel Projekt</h1>"
+            "<p>Soubor byl nalezen pres EXCEL_FILE_ID.</p>"
+            f"<p>Nazev: {file_name}</p>"
+            f"<p>ID souboru: {file_id}</p>"
+            f"<p>Web URL: {web_url}</p>"
+        )
+    else:
+        return f"Nepodarilo se nacist metadata souboru pres ID. Odpoved: {file_data}"
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=10000)
