@@ -99,6 +99,16 @@ def get_shared_file_info(access_token):
     )
 
     return response.json()
+
+def get_file_info_by_id(access_token):
+    file_id = os.getenv("EXCEL_FILE_ID")
+
+    response = requests.get(
+        f"https://graph.microsoft.com/v1.0/me/drive/items/{file_id}",
+        headers={"Authorization": f"Bearer {access_token}"},
+    )
+
+    return response.json()
 def get_access_token():
     client_id = os.getenv("STRAVA_CLIENT_ID")
     client_secret = os.getenv("STRAVA_CLIENT_SECRET")
