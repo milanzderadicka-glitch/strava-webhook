@@ -325,11 +325,19 @@ def test_shared_file():
 
     file_data = get_shared_file_info(access_token)
 
-    return (
-        "<h1>Strv Excel Projekt</h1>"
-        "<p>Test shared file route funguje.</p>"
-        f"<p>EXCEL_SHARE_URL: {file_data.get('excel_url')}</p>"
-        f"<p>Poznamka: {file_data.get('note')}</p>"
-    )
+    file_name = file_data.get("name")
+    file_id = file_data.get("id")
+    web_url = file_data.get("webUrl")
+
+    if file_id:
+        return (
+            "<h1>Strv Excel Projekt</h1>"
+            "<p>Soubor byl nalezen pres sdileny odkaz.</p>"
+            f"<p>Nazev: {file_name}</p>"
+            f"<p>ID souboru: {file_id}</p>"
+            f"<p>Web URL: {web_url}</p>"
+        )
+    else:
+        return f"Nepodarilo se nacist metadata souboru. Odpoved: {file_data}"
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=10000)
