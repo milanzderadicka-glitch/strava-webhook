@@ -537,5 +537,20 @@ def test_last_row():
     else:
         return f"Nepodarilo se nacist posledni radek. Odpoved: {row_data}"
 
+@app.route("/test-next-row")
+def test_next_row():
+    last_excel_row = 4474
+    last_poradove_cislo = 4501
+
+    next_excel_row = last_excel_row + 1
+    next_poradove_cislo = last_poradove_cislo + 1
+
+    return (
+        "<h1>Strv Excel Projekt</h1>"
+        "<p>Vypocet dalsiho radku a poradi:</p>"
+        f"<p>Dalsi radek v Excelu: {next_excel_row}</p>"
+        f"<p>Dalsi poradove cislo: {next_poradove_cislo}</p>"
+    )
+
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=10000)
