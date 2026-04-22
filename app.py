@@ -150,6 +150,16 @@ def get_parametry_used_range(access_token):
 
     return response.json()
 
+def get_last_parametry_row(access_token):
+    file_id = os.getenv("EXCEL_FILE_ID")
+
+    response = requests.get(
+        f"https://graph.microsoft.com/v1.0/me/drive/items/{file_id}/workbook/worksheets('Parametry_tréninku')/range(address='A4474:X4474')",
+        headers={"Authorization": f"Bearer {access_token}"},
+    )
+
+    return response.json()
+
 def get_access_token():
     client_id = os.getenv("STRAVA_CLIENT_ID")
     client_secret = os.getenv("STRAVA_CLIENT_SECRET")
@@ -505,6 +515,27 @@ def test_used_range():
         )
     else:
         return f"Nepodarilo se nacist used range. Odpoved: {used_data}"
+
+@app.route("/test-last-row")
+def test_last_row():
+    token_data = refresh_microsoft_token()
+
+    access_token = token_data.get("access_token")
+
+    if not access_token:
+        return f"Obnoveni Microsoft tokenu selhalo. Odpoved: {token_data}"
+
+    row_data = get_last_parametry_row(access_token)
+    values = row_data.get("values", [])
+
+    if values and len(values) > 0:
+        return (
+            "<h1>Strv Excel Projekt</h1>"
+            "<p>Posledni skutecny radek listu Parametry_tréninku:</p>"
+            f"<p>{values[0]}</p>"
+        )
+    else:
+        return f"Nepodarilo se nacist posledni radek. Odpoved: {row_data}"
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=10000)
