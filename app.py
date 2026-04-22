@@ -130,6 +130,16 @@ def get_parametry_headers(access_token):
 
     return response.json()
 
+def get_parametry_recent_rows(access_token):
+    file_id = os.getenv("EXCEL_FILE_ID")
+
+    response = requests.get(
+        f"https://graph.microsoft.com/v1.0/me/drive/items/{file_id}/workbook/worksheets('Parametry_tréninku')/range(address='A1730:X1760')",
+        headers={"Authorization": f"Bearer {access_token}"},
+    )
+
+    return response.json()
+
 def get_access_token():
     client_id = os.getenv("STRAVA_CLIENT_ID")
     client_secret = os.getenv("STRAVA_CLIENT_SECRET")
@@ -438,6 +448,27 @@ def test_headers():
         return html
     else:
         return f"Nepodarilo se nacist hlavicky. Odpoved: {headers_data}"
+
+@app.route("/test-recent-rows")
+def test_recent_rows():
+    token_data = refresh_microsoft_token()
+
+    access_token = token_data.get("access_token")
+
+    if not access_token:
+        return f"Obnoveni Microsoft tokenu selhalo. Odpoved: {token_data}"
+
+    rows_data = get_parametry_recent_rows(access_token)
+    values = rows_data.get("values", [])
+
+    if values and len(values) > 0:
+        html = "<h1>Strv Excel Projekt</h1><p>Posledni nacitene radky:</p><ul>"
+        for row in values[-5:]:
+            html += f"<li>{row}</li>"
+        html += "</ul>"
+        return html
+    else:
+        return f"Nepodarilo se nacist posledni radky. Odpoved: {rows_data}"
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=10000)
