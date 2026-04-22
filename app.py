@@ -160,6 +160,16 @@ def get_last_parametry_row(access_token):
 
     return response.json()
 
+def get_parametry_poradove_column(access_token):
+    file_id = os.getenv("EXCEL_FILE_ID")
+
+    response = requests.get(
+        f"https://graph.microsoft.com/v1.0/me/drive/items/{file_id}/workbook/worksheets('Parametry_tréninku')/range(address='A2:A5001')",
+        headers={"Authorization": f"Bearer {access_token}"},
+    )
+
+    return response.json()
+
 def get_access_token():
     client_id = os.getenv("STRAVA_CLIENT_ID")
     client_secret = os.getenv("STRAVA_CLIENT_SECRET")
@@ -551,6 +561,27 @@ def test_next_row():
         f"<p>Dalsi radek v Excelu: {next_excel_row}</p>"
         f"<p>Dalsi poradove cislo: {next_poradove_cislo}</p>"
     )
+
+@app.route("/test-poradove-column")
+def test_poradove_column():
+    token_data = refresh_microsoft_token()
+
+    access_token = token_data.get("access_token")
+
+    if not access_token:
+        return f"Obnoveni Microsoft tokenu selhalo. Odpoved: {token_data}"
+
+    col_data = get_parametry_poradove_column(access_token)
+    values = col_data.get("values", [])
+
+    if values and len(values) > 0:
+        html = "<h1>Strv Excel Projekt</h1><p>Konec sloupce Pořadové číslo:</p><ul>"
+        for row in values[-10:]:
+            html += f"<li>{row}</li>"
+        html += "</ul>"
+        return html
+    else:
+        return f"Nepodarilo se nacist sloupec A. Odpoved: {col_data}"
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=10000)
