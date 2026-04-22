@@ -120,6 +120,16 @@ def get_workbook_worksheets(access_token):
 
     return response.json()
 
+def get_parametry_headers(access_token):
+    file_id = os.getenv("EXCEL_FILE_ID")
+
+    response = requests.get(
+        f"https://graph.microsoft.com/v1.0/me/drive/items/{file_id}/workbook/worksheets('Parametry_tréninku')/range(address='A1:X1')",
+        headers={"Authorization": f"Bearer {access_token}"},
+    )
+
+    return response.json()
+
 def get_access_token():
     client_id = os.getenv("STRAVA_CLIENT_ID")
     client_secret = os.getenv("STRAVA_CLIENT_SECRET")
@@ -407,6 +417,27 @@ def test_worksheets():
         return html
     else:
         return f"Nepodarilo se nacist listy workbooku. Odpoved: {sheets_data}"
+
+@app.route("/test-headers")
+def test_headers():
+    token_data = refresh_microsoft_token()
+
+    access_token = token_data.get("access_token")
+
+    if not access_token:
+        return f"Obnoveni Microsoft tokenu selhalo. Odpoved: {token_data}"
+
+    headers_data = get_parametry_headers(access_token)
+    values = headers_data.get("values", [])
+
+    if values and len(values) > 0:
+        html = "<h1>Strv Excel Projekt</h1><p>Hlavičky listu Parametry_tréninku:</p><ul>"
+        for header in values[0]:
+            html += f"<li>{header}</li>"
+        html += "</ul>"
+        return html
+    else:
+        return f"Nepodarilo se nacist hlavicky. Odpoved: {headers_data}"
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=10000)
