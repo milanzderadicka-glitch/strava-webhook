@@ -170,6 +170,17 @@ def get_parametry_poradove_column(access_token):
 
     return response.json()
 
+def find_last_filled_poradove_row(values, start_row=2):
+    for i in range(len(values) - 1, -1, -1):
+        cell = values[i][0] if values[i] else ""
+
+        if cell not in ("", None):
+            excel_row = start_row + i
+            poradove_cislo = cell
+            return excel_row, poradove_cislo
+
+    return None, None
+
 def get_access_token():
     client_id = os.getenv("STRAVA_CLIENT_ID")
     client_secret = os.getenv("STRAVA_CLIENT_SECRET")
@@ -582,6 +593,17 @@ def test_poradove_column():
         return html
     else:
         return f"Nepodarilo se nacist sloupec A. Odpoved: {col_data}"
+
+def find_last_filled_poradove_row(values, start_row=2):
+    for i in range(len(values) - 1, -1, -1):
+        cell = values[i][0] if values[i] else ""
+
+        if cell not in ("", None):
+            excel_row = start_row + i
+            poradove_cislo = cell
+            return excel_row, poradove_cislo
+
+    return None, None
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=10000)
