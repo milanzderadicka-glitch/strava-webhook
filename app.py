@@ -594,16 +594,29 @@ def test_poradove_column():
     else:
         return f"Nepodarilo se nacist sloupec A. Odpoved: {col_data}"
 
-def find_last_filled_poradove_row(values, start_row=2):
-    for i in range(len(values) - 1, -1, -1):
-        cell = values[i][0] if values[i] else ""
+@app.route("/test-find-last-poradove")
+def test_find_last_poradove():
+    token_data = refresh_microsoft_token()
 
-        if cell not in ("", None):
-            excel_row = start_row + i
-            poradove_cislo = cell
-            return excel_row, poradove_cislo
+    access_token = token_data.get("access_token")
 
-    return None, None
+    if not access_token:
+        return f"Obnoveni Microsoft tokenu selhalo. Odpoved: {token_data}"
+
+    col_data = get_parametry_poradove_column(access_token)
+    values = col_data.get("values", [])
+
+    excel_row, poradove_cislo = find_last_filled_poradove_row(values, start_row=2)
+
+    if excel_row and poradove_cislo:
+        return (
+            "<h1>Strv Excel Projekt</h1>"
+            "<p>Posledni skutecne vyplneny radek podle sloupce Pořadové číslo:</p>"
+            f"<p>Radek v Excelu: {excel_row}</p>"
+            f"<p>Posledni poradove cislo: {poradove_cislo}</p>"
+        )
+    else:
+        return "Nepodarilo se najit posledni vyplneny radek podle sloupce A."
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=10000)
