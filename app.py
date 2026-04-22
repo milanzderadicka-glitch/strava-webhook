@@ -140,6 +140,16 @@ def get_parametry_recent_rows(access_token):
 
     return response.json()
 
+def get_parametry_used_range(access_token):
+    file_id = os.getenv("EXCEL_FILE_ID")
+
+    response = requests.get(
+        f"https://graph.microsoft.com/v1.0/me/drive/items/{file_id}/workbook/worksheets('Parametry_tréninku')/usedRange(valuesOnly=true)",
+        headers={"Authorization": f"Bearer {access_token}"},
+    )
+
+    return response.json()
+
 def get_access_token():
     client_id = os.getenv("STRAVA_CLIENT_ID")
     client_secret = os.getenv("STRAVA_CLIENT_SECRET")
@@ -469,6 +479,32 @@ def test_recent_rows():
         return html
     else:
         return f"Nepodarilo se nacist posledni radky. Odpoved: {rows_data}"
+
+@app.route("/test-used-range")
+def test_used_range():
+    token_data = refresh_microsoft_token()
+
+    access_token = token_data.get("access_token")
+
+    if not access_token:
+        return f"Obnoveni Microsoft tokenu selhalo. Odpoved: {token_data}"
+
+    used_data = get_parametry_used_range(access_token)
+
+    address = used_data.get("address")
+    row_count = used_data.get("rowCount")
+    column_count = used_data.get("columnCount")
+
+    if address:
+        return (
+            "<h1>Strv Excel Projekt</h1>"
+            "<p>Used range listu Parametry_tréninku:</p>"
+            f"<p>Adresa: {address}</p>"
+            f"<p>Pocet radku: {row_count}</p>"
+            f"<p>Pocet sloupcu: {column_count}</p>"
+        )
+    else:
+        return f"Nepodarilo se nacist used range. Odpoved: {used_data}"
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=10000)
