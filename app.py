@@ -119,6 +119,7 @@ def get_workbook_worksheets(access_token):
     )
 
     return response.json()
+
 def get_access_token():
     client_id = os.getenv("STRAVA_CLIENT_ID")
     client_secret = os.getenv("STRAVA_CLIENT_SECRET")
@@ -406,5 +407,6 @@ def test_worksheets():
         return html
     else:
         return f"Nepodarilo se nacist listy workbooku. Odpoved: {sheets_data}"
+
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=10000)
