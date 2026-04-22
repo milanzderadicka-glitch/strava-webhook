@@ -309,5 +309,22 @@ def test_excel_link():
         )
     else:
         return "EXCEL_SHARE_URL neni ulozeny."
+@app.route("/test-shared-file")
+def test_shared_file():
+    token_data = refresh_microsoft_token()
+
+    access_token = token_data.get("access_token")
+
+    if not access_token:
+        return f"Obnoveni Microsoft tokenu selhalo. Odpoved: {token_data}"
+
+    file_data = get_shared_file_info(access_token)
+
+    return (
+        "<h1>Strv Excel Projekt</h1>"
+        "<p>Test shared file route funguje.</p>"
+        f"<p>EXCEL_SHARE_URL: {file_data.get('excel_url')}</p>"
+        f"<p>Poznamka: {file_data.get('note')}</p>"
+    )
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=10000)
