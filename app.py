@@ -109,6 +109,16 @@ def get_file_info_by_id(access_token):
     )
 
     return response.json()
+
+def get_workbook_worksheets(access_token):
+    file_id = os.getenv("EXCEL_FILE_ID")
+
+    response = requests.get(
+        f"https://graph.microsoft.com/v1.0/me/drive/items/{file_id}/workbook/worksheets",
+        headers={"Authorization": f"Bearer {access_token}"},
+    )
+
+    return response.json()
 def get_access_token():
     client_id = os.getenv("STRAVA_CLIENT_ID")
     client_secret = os.getenv("STRAVA_CLIENT_SECRET")
@@ -375,5 +385,26 @@ def test_file_id():
         )
     else:
         return f"Nepodarilo se nacist metadata souboru pres ID. Odpoved: {file_data}"
+
+@app.route("/test-worksheets")
+def test_worksheets():
+    token_data = refresh_microsoft_token()
+
+    access_token = token_data.get("access_token")
+
+    if not access_token:
+        return f"Obnoveni Microsoft tokenu selhalo. Odpoved: {token_data}"
+
+    sheets_data = get_workbook_worksheets(access_token)
+    sheets = sheets_data.get("value", [])
+
+    if sheets:
+        html = "<h1>Strv Excel Projekt</h1><p>Seznam listu workbooku:</p><ul>"
+        for sheet in sheets:
+            html += f"<li>{sheet.get('name')}</li>"
+        html += "</ul>"
+        return html
+    else:
+        return f"Nepodarilo se nacist listy workbooku. Odpoved: {sheets_data}"
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=10000)
