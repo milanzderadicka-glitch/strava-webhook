@@ -618,5 +618,32 @@ def test_find_last_poradove():
     else:
         return "Nepodarilo se najit posledni vyplneny radek podle sloupce A."
 
+@app.route("/test-next-from-poradove")
+def test_next_from_poradove():
+    token_data = refresh_microsoft_token()
+
+    access_token = token_data.get("access_token")
+
+    if not access_token:
+        return f"Obnoveni Microsoft tokenu selhalo. Odpoved: {token_data}"
+
+    col_data = get_parametry_poradove_column(access_token)
+    values = col_data.get("values", [])
+
+    excel_row, poradove_cislo = find_last_filled_poradove_row(values, start_row=2)
+
+    if excel_row and poradove_cislo:
+        next_excel_row = excel_row + 1
+        next_poradove_cislo = int(poradove_cislo) + 1
+
+        return (
+            "<h1>Strv Excel Projekt</h1>"
+            "<p>Dalsi hodnoty vypoctene z Pořadového čísla:</p>"
+            f"<p>Dalsi radek v Excelu: {next_excel_row}</p>"
+            f"<p>Dalsi poradove cislo: {next_poradove_cislo}</p>"
+        )
+    else:
+        return "Nepodarilo se spocitat dalsi radek a dalsi poradove cislo."
+
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=10000)
