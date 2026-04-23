@@ -181,6 +181,47 @@ def find_last_filled_poradove_row(values, start_row=2):
 
     return None, None
 
+def write_test_row(access_token):
+    file_id = os.getenv("EXCEL_FILE_ID")
+
+    values = [[
+        4502,                 # Pořadové číslo
+        "2026-04-23",         # Datum - zatím jen test
+        "12:00",              # Čas - zatím jen test
+        "",                   # Kód aktivity
+        "běh",                # Aktivita
+        "",                   # ID
+        "",                   # Trasa
+        "0:30:00",            # Délka tréninku
+        150,                  # TF průměr
+        170,                  # TF maximum
+        500,                  # Spotřebovaná energie
+        "",                   # Tréninkový efekt
+        "0:10",               # Zóna 1
+        "0:10",               # Zóna 2
+        "0:05",               # Zóna 3
+        "0:02",               # Nad zónou 3
+        "0:03",               # Pod zónou 1
+        "",                   # Subjektivní hodnocení
+        5.00,                 # Km celkem
+        50,                   # Stoupání
+        "TEST ZAPISU",        # Poznámka
+        "test",               # AI poznámka
+        "",                   # Vypočtený tréninkový efekt
+        "test-strava-id"      # Strava ID
+    ]]
+
+    response = requests.patch(
+        f"https://graph.microsoft.com/v1.0/me/drive/items/{file_id}/workbook/worksheets('Parametry_tréninku')/range(address='A4475:X4475')",
+        headers={
+            "Authorization": f"Bearer {access_token}",
+            "Content-Type": "application/json",
+        },
+        json={"values": values},
+    )
+
+    return response.json() if response.text else {"status": "ok"}
+
 def get_access_token():
     client_id = os.getenv("STRAVA_CLIENT_ID")
     client_secret = os.getenv("STRAVA_CLIENT_SECRET")
@@ -644,6 +685,23 @@ def test_next_from_poradove():
         )
     else:
         return "Nepodarilo se spocitat dalsi radek a dalsi poradove cislo."
+
+@app.route("/test-write-row")
+def test_write_row():
+    token_data = refresh_microsoft_token()
+
+    access_token = token_data.get("access_token")
+
+    if not access_token:
+        return f"Obnoveni Microsoft tokenu selhalo. Odpoved: {token_data}"
+
+    result = write_test_row(access_token)
+
+    return (
+        "<h1>Strv Excel Projekt</h1>"
+        "<p>Test zapisove route probehl.</p>"
+        f"<p>Odpoved: {result}</p>"
+    )
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=10000)
