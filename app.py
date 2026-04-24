@@ -192,6 +192,17 @@ def find_last_filled_poradove_row(values, start_row=2):
 
     return None, None
 
+def find_last_filled_strava_id_row(values, start_row=2):
+    for i in range(len(values) - 1, -1, -1):
+        cell = values[i][0] if values[i] else ""
+
+        if cell not in ("", None):
+            excel_row = start_row + i
+            strava_id = cell
+            return excel_row, strava_id
+
+    return None, None
+
 def format_strava_date(date_str):
     if not date_str:
         return ""
@@ -852,6 +863,30 @@ def test_strava_id_column():
         return html
     else:
         return f"Nepodarilo se nacist sloupec Strava ID. Odpoved: {col_data}"
+
+@app.route("/test-find-last-strava-id")
+def test_find_last_strava_id():
+    token_data = refresh_microsoft_token()
+
+    access_token = token_data.get("access_token")
+
+    if not access_token:
+        return f"Obnoveni Microsoft tokenu selhalo. Odpoved: {token_data}"
+
+    col_data = get_parametry_strava_id_column(access_token)
+    values = col_data.get("values", [])
+
+    excel_row, strava_id = find_last_filled_strava_id_row(values, start_row=2)
+
+    if excel_row and strava_id:
+        return (
+            "<h1>Strv Excel Projekt</h1>"
+            "<p>Posledni vyplnene Strava ID:</p>"
+            f"<p>Radek v Excelu: {excel_row}</p>"
+            f"<p>Strava ID: {strava_id}</p>"
+        )
+    else:
+        return "Nepodarilo se najit posledni vyplnene Strava ID."
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=10000)
