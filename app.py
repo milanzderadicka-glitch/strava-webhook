@@ -203,6 +203,17 @@ def find_last_filled_strava_id_row(values, start_row=2):
 
     return None, None
 
+def get_existing_strava_ids(values):
+    ids = set()
+
+    for row in values:
+        if row and len(row) > 0:
+            cell = row[0]
+            if cell not in ("", None):
+                ids.add(str(cell).strip())
+
+    return ids
+
 def format_strava_date(date_str):
     if not date_str:
         return ""
@@ -887,6 +898,30 @@ def test_find_last_strava_id():
         )
     else:
         return "Nepodarilo se najit posledni vyplnene Strava ID."
+
+@app.route("/test-existing-strava-ids")
+def test_existing_strava_ids():
+    token_data = refresh_microsoft_token()
+
+    access_token = token_data.get("access_token")
+
+    if not access_token:
+        return f"Obnoveni Microsoft tokenu selhalo. Odpoved: {token_data}"
+
+    col_data = get_parametry_strava_id_column(access_token)
+    values = col_data.get("values", [])
+
+    ids = get_existing_strava_ids(values)
+    sample_ids = list(ids)[:10]
+
+    html = "<h1>Strv Excel Projekt</h1>"
+    html += f"<p>Pocet existujicich Strava ID: {len(ids)}</p>"
+    html += "<p>Ukazka ID:</p><ul>"
+    for item in sample_ids:
+        html += f"<li>{item}</li>"
+    html += "</ul>"
+
+    return html
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=10000)
