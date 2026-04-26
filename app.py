@@ -408,6 +408,15 @@ def get_recent_activities(access_token):
     )
     return response.json()
 
+def get_recent_activities_limit(access_token, per_page=20):
+    headers = {"Authorization": f"Bearer {access_token}"}
+    response = requests.get(
+        "https://www.strava.com/api/v3/athlete/activities",
+        headers=headers,
+        params={"per_page": per_page},
+    )
+    return response.json()
+
 def get_activity_detail(access_token, activity_id):
     response = requests.get(
         f"https://www.strava.com/api/v3/activities/{activity_id}",
@@ -941,6 +950,15 @@ def test_existing_strava_ids():
     html += "</ul>"
 
     return html
+
+def get_recent_activities_limit(access_token, per_page=20):
+    headers = {"Authorization": f"Bearer {access_token}"}
+    response = requests.get(
+        "https://www.strava.com/api/v3/athlete/activities",
+        headers=headers,
+        params={"per_page": per_page},
+    )
+    return response.json()
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=10000)
