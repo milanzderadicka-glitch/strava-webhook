@@ -293,6 +293,17 @@ def write_test_row(access_token):
 
     detail = get_activity_detail(strava_access_token, activity_id)
     zones = get_activity_zones(strava_access_token, activity_id)
+        # 2b) ochrana proti duplicitnimu zapisu podle Strava ID
+    strava_id_data = get_parametry_strava_id_column(access_token)
+    existing_id_values = strava_id_data.get("values", [])
+    existing_ids = get_existing_strava_ids(existing_id_values)
+
+    if str(activity_id).strip() in existing_ids:
+        return {
+            "status": "duplicate",
+            "message": "Aktivita uz v Excelu existuje.",
+            "strava_id": str(activity_id),
+        }
 
     # 3) zakladni mapovani
     start_date_local = detail.get("start_date_local", "")
@@ -847,6 +858,14 @@ def test_write_row():
         return f"Obnoveni Microsoft tokenu selhalo. Odpoved: {token_data}"
 
     result = write_test_row(access_token)
+
+    if isinstance(result, dict) and result.get("status") == "duplicate":
+        return (
+            "<h1>Strv Excel Projekt</h1>"
+            "<p>Duplicitni ochrana zafungovala.</p>"
+            f"<p>{result.get('message')}</p>"
+            f"<p>Strava ID: {result.get('strava_id')}</p>"
+        )
 
     return (
         "<h1>Strv Excel Projekt</h1>"
