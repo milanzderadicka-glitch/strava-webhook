@@ -951,14 +951,24 @@ def test_existing_strava_ids():
 
     return html
 
-def get_recent_activities_limit(access_token, per_page=20):
-    headers = {"Authorization": f"Bearer {access_token}"}
-    response = requests.get(
-        "https://www.strava.com/api/v3/athlete/activities",
-        headers=headers,
-        params={"per_page": per_page},
-    )
-    return response.json()
+@app.route("/test-recent-activities-limit")
+def test_recent_activities_limit():
+    strava_token_data = get_access_token()
+    strava_access_token = strava_token_data.get("access_token")
+
+    if not strava_access_token:
+        return f"Nepodarilo se ziskat Strava access token. Odpoved: {strava_token_data}"
+
+    activities = get_recent_activities_limit(strava_access_token, per_page=10)
+
+    if isinstance(activities, list) and len(activities) > 0:
+        html = "<h1>Strv Excel Projekt</h1><p>Poslednich 10 aktivit ze Stravy:</p><ul>"
+        for act in activities:
+            html += f"<li>ID: {act.get('id')} | Typ: {act.get('sport_type')} | Nazev: {act.get('name')}</li>"
+        html += "</ul>"
+        return html
+
+    return f"Nepodarilo se nacist vice aktivit. Odpoved: {activities}"
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=10000)
