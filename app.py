@@ -1238,7 +1238,7 @@ def sync_missing_activities():
     html += f"<p>Pocet doplnovanych aktivit: {len(missing_sorted)}</p>"
     html += "<ul>"
 
-       for item in results:
+    for item in results:
         try:
             res = item.get("result", {})
             if isinstance(res, dict) and res.get("status") == "duplicate":
