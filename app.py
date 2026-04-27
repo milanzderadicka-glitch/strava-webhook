@@ -384,6 +384,130 @@ def write_test_row(access_token):
             return {"status": response.status_code, "text": response.text}
 
     return {"status": "ok", "row": next_excel_row, "poradove_cislo": next_poradove_cislo, "strava_id": activity_id}
+
+def write_activity_by_id(access_token, activity_id):
+    file_id = os.getenv("EXCEL_FILE_ID")
+
+    # 1) zjistit dalsi radek a dalsi poradove cislo podle sloupce A
+    col_data = get_parametry_poradove_column(access_token)
+    col_values = col_data.get("values", [])
+    excel_row, last_poradove_cislo = find_last_filled_poradove_row(col_values, start_row=2)
+
+    if not excel_row or last_poradove_cislo in (None, ""):
+        return {"error": "Nepodarilo se najit posledni vyplneny radek podle sloupce A."}
+
+    next_excel_row = excel_row + 1
+    next_poradove_cislo = int(last_poradove_cislo) + 1
+
+    # 2) ochrana proti duplicitnimu zapisu podle Strava ID
+    strava_id_data = get_parametry_strava_id_column(access_token)
+    existing_id_values = strava_id_data.get("values", [])
+    existing_ids = get_existing_strava_ids(existing_id_values)
+
+    if str(activity_id).strip() in existing_ids:
+        return {
+            "status": "duplicate",
+            "message": "Aktivita uz v Excelu existuje.",
+            "strava_id": str(activity_id),
+        }
+
+    # 3) Strava token
+    strava_token_data = get_access_token()
+    strava_access_token = strava_token_data.get("access_token")
+
+    if not strava_access_token:
+        return {"error": f"Nepodarilo se ziskat Strava access token. Odpoved: {strava_token_data}"}
+
+    # 4) detail aktivity a zony
+    detail = get_activity_detail(strava_access_token, activity_id)
+    zones = get_activity_zones(strava_access_token, activity_id)
+
+    # 5) mapovani
+    start_date_local = detail.get("start_date_local", "")
+    sport_type = detail.get("sport_type", "")
+    mapped_activity = map_activity_from_strava(sport_type)
+
+    datum = format_strava_date(start_date_local)
+    cas = format_strava_time(start_date_local)
+    delka = format_hhmmss(detail.get("moving_time", 0))
+
+    tf_prumer = detail.get("average_heartrate")
+    tf_max = detail.get("max_heartrate")
+    kalorie = detail.get("calories")
+    km_celkem = detail.get("distance")
+    stoupani = detail.get("total_elevation_gain")
+
+    tf_prumer = int(round(tf_prumer)) if tf_prumer not in (None, "") else ""
+    tf_max = int(round(tf_max)) if tf_max not in (None, "") else ""
+    kalorie = int(round(kalorie)) if kalorie not in (None, "") else ""
+    km_celkem = round(float(km_celkem) / 1000, 2) if km_celkem not in (None, "") else ""
+    stoupani = int(round(stoupani)) if stoupani not in (None, "") else ""
+
+    # 6) zony
+    hr_buckets = [0, 0, 0, 0, 0]
+    for zone_group in zones:
+        if zone_group.get("type") == "heartrate":
+            distribution = zone_group.get("distribution_buckets", [])
+            for i, bucket in enumerate(distribution[:5]):
+                hr_buckets[i] = bucket.get("time", 0)
+
+    pod_zonou_1 = format_hmm(hr_buckets[0])
+    zona_1 = format_hmm(hr_buckets[1])
+    zona_2 = format_hmm(hr_buckets[2])
+    zona_3 = format_hmm(hr_buckets[3])
+    nad_zonou_3 = format_hmm(hr_buckets[4])
+
+    # 7) pripravit radek A:X
+    values = [[
+        next_poradove_cislo,     # A Pořadové číslo
+        datum,                   # B Datum
+        cas,                     # C Čas
+        "",                      # D Kód aktivity
+        mapped_activity,         # E Aktivita
+        "",                      # F ID
+        "",                      # G Trasa
+        delka,                   # H Délka tréninku
+        tf_prumer,               # I TF průměr
+        tf_max,                  # J TF maximum
+        kalorie,                 # K Spotřebovaná energie
+        "",                      # L Tréninkový efekt
+        zona_1,                  # M Zóna 1
+        zona_2,                  # N Zóna 2
+        zona_3,                  # O Zóna 3
+        nad_zonou_3,             # P Nad zónou 3
+        pod_zonou_1,             # Q Pod zónou 1
+        "",                      # R Subjektivní hodnocení
+        km_celkem,               # S Km celkem
+        stoupani,                # T Stoupání
+        "",                      # U Poznámka
+        "",                      # V AI poznámka
+        "",                      # W Vypočtený tréninkový efekt
+        str(activity_id),        # X Strava ID
+    ]]
+
+    response = requests.patch(
+        f"https://graph.microsoft.com/v1.0/me/drive/items/{file_id}/workbook/worksheets('Parametry_tréninku')/range(address='A{next_excel_row}:X{next_excel_row}')",
+        headers={
+            "Authorization": f"Bearer {access_token}",
+            "Content-Type": "application/json",
+        },
+        json={"values": values},
+    )
+
+    if response.text:
+        try:
+            return response.json()
+        except Exception:
+            return {"status": response.status_code, "text": response.text}
+
+    return {
+        "status": "ok",
+        "row": next_excel_row,
+        "poradove_cislo": next_poradove_cislo,
+        "strava_id": str(activity_id),
+    }
+
+
 def get_access_token():
     client_id = os.getenv("STRAVA_CLIENT_ID")
     client_secret = os.getenv("STRAVA_CLIENT_SECRET")
@@ -1015,6 +1139,31 @@ def test_missing_activities():
         html += "<p>Mezi poslednimi 10 aktivitami neni nic k doplneni.</p>"
 
     return html
+
+@app.route("/test-write-specific-activity")
+def test_write_specific_activity():
+    ms_token_data = refresh_microsoft_token()
+    ms_access_token = ms_token_data.get("access_token")
+
+    if not ms_access_token:
+        return f"Nepodarilo se ziskat Microsoft access token. Odpoved: {ms_token_data}"
+
+    activity_id = 18269768179  # konkretni chybejici aktivita ze seznamu
+    result = write_activity_by_id(ms_access_token, activity_id)
+
+    if isinstance(result, dict) and result.get("status") == "duplicate":
+        return (
+            "<h1>Strv Excel Projekt</h1>"
+            "<p>Duplicitni ochrana zafungovala.</p>"
+            f"<p>{result.get('message')}</p>"
+            f"<p>Strava ID: {result.get('strava_id')}</p>"
+        )
+
+    return (
+        "<h1>Strv Excel Projekt</h1>"
+        "<p>Test zapisu konkretni aktivity probehl.</p>"
+        f"<p>Odpoved: {result}</p>"
+    )
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=10000)
