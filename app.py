@@ -1226,7 +1226,7 @@ def sync_missing_activities():
     for act in missing_sorted:
         act_id = act.get("id")
         result = write_activity_by_id(ms_access_token, act_id)
-                results.append({
+        results.append({
             "id": act_id,
             "name": act.get("name", ""),
             "sport_type": act.get("sport_type", ""),
