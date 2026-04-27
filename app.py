@@ -443,8 +443,8 @@ def write_activity_by_id(access_token, activity_id):
 
     datum = format_strava_date(start_date_local)
     cas = format_strava_time(start_date_local)
-   delka_seconds = get_activity_duration_seconds(detail)
-   delka = format_hhmmss(delka_seconds)
+    delka_seconds = get_activity_duration_seconds(detail)
+    delka = format_hhmmss(delka_seconds)
 
     tf_prumer = detail.get("average_heartrate")
     tf_max = detail.get("max_heartrate")
