@@ -1226,10 +1226,10 @@ def sync_missing_activities():
     for act in missing_sorted:
         act_id = act.get("id")
         result = write_activity_by_id(ms_access_token, act_id)
-        results.append({
+                results.append({
             "id": act_id,
-            "name": act.get("name"),
-            "sport_type": act.get("sport_type"),
+            "name": act.get("name", ""),
+            "sport_type": act.get("sport_type", ""),
             "result": result,
         })
 
@@ -1238,19 +1238,26 @@ def sync_missing_activities():
     html += f"<p>Pocet doplnovanych aktivit: {len(missing_sorted)}</p>"
     html += "<ul>"
 
-    for item in results:
-        res = item["result"]
-        if isinstance(res, dict) and res.get("status") == "duplicate":
-            status = "duplicate"
-        elif isinstance(res, dict) and res.get("error"):
-            status = f"error: {res.get('error')}"
-        else:
-            status = "zapsano"
+       for item in results:
+        try:
+            res = item.get("result", {})
+            if isinstance(res, dict) and res.get("status") == "duplicate":
+                status = "duplicate"
+            elif isinstance(res, dict) and res.get("error"):
+                status = f"error: {res.get('error')}"
+            else:
+                status = "zapsano"
 
-        html += (
-            f"<li>ID: {item['id']} | Typ: {item['sport_type']} | "
-            f"Nazev: {item['name']} | Stav: {status}</li>"
-        )
+            act_id = item.get("id", "")
+            sport_type = item.get("sport_type", "")
+            name = item.get("name", "")
+
+            html += (
+                f"<li>ID: {act_id} | Typ: {sport_type} | "
+                f"Nazev: {name} | Stav: {status}</li>"
+            )
+        except Exception as e:
+            html += f"<li>Chyba pri zpracovani jedne polozky: {e}</li>"
 
     html += "</ul>"
     return html
