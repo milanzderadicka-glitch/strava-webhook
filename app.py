@@ -1180,5 +1180,80 @@ def test_write_specific_activity():
         f"<p>Odpoved: {result}</p>"
     )
 
+@app.route("/sync-missing-activities")
+def sync_missing_activities():
+    # 1) Strava token
+    strava_token_data = get_access_token()
+    strava_access_token = strava_token_data.get("access_token")
+
+    if not strava_access_token:
+        return f"Nepodarilo se ziskat Strava access token. Odpoved: {strava_token_data}"
+
+    # 2) Microsoft token
+    ms_token_data = refresh_microsoft_token()
+    ms_access_token = ms_token_data.get("access_token")
+
+    if not ms_access_token:
+        return f"Nepodarilo se ziskat Microsoft access token. Odpoved: {ms_token_data}"
+
+    # 3) Poslednich 10 aktivit ze Stravy
+    activities = get_recent_activities_limit(strava_access_token, per_page=10)
+    if not isinstance(activities, list):
+        return f"Strava nevratila seznam aktivit. Odpoved: {activities}"
+
+    # 4) Existujici Strava ID z Excelu
+    col_data = get_parametry_strava_id_column(ms_access_token)
+    values = col_data.get("values", [])
+    existing_ids = get_existing_strava_ids(values)
+
+    # 5) Najit chybejici aktivity
+    missing = []
+    for act in activities:
+        act_id = str(act.get("id", "")).strip()
+        if act_id and act_id not in existing_ids:
+            missing.append(act)
+
+    if not missing:
+        return (
+            "<h1>Strv Excel Projekt</h1>"
+            "<p>Neni co doplnit. Vsechny posledni aktivity uz v Excelu jsou.</p>"
+        )
+
+    # 6) Zapsat chybejici aktivity od nejstarsi k nejnovejsi
+    missing_sorted = list(reversed(missing))
+    results = []
+
+    for act in missing_sorted:
+        act_id = act.get("id")
+        result = write_activity_by_id(ms_access_token, act_id)
+        results.append({
+            "id": act_id,
+            "name": act.get("name"),
+            "sport_type": act.get("sport_type"),
+            "result": result,
+        })
+
+    # 7) Vystup
+    html = "<h1>Strv Excel Projekt</h1>"
+    html += f"<p>Pocet doplnovanych aktivit: {len(missing_sorted)}</p>"
+    html += "<ul>"
+
+    for item in results:
+        res = item["result"]
+        if isinstance(res, dict) and res.get("status") == "duplicate":
+            status = "duplicate"
+        elif isinstance(res, dict) and res.get("error"):
+            status = f"error: {res.get('error')}"
+        else:
+            status = "zapsano"
+
+        html += (
+            f"<li>ID: {item['id']} | Typ: {item['sport_type']} | "
+            f"Nazev: {item['name']} | Stav: {status}</li>"
+        )
+
+    html += "</ul>"
+    return html
+
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=10000)
