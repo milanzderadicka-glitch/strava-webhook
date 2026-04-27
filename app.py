@@ -263,6 +263,19 @@ def map_activity_from_strava(sport_type):
     }
     return mapping.get(sport_type, "")
 
+
+def get_activity_duration_seconds(detail):
+    sport_type = detail.get("sport_type", "")
+    moving_time = detail.get("moving_time", 0) or 0
+    elapsed_time = detail.get("elapsed_time", 0) or 0
+
+    elapsed_types = {"Workout", "WeightTraining", "Crossfit"}
+
+    if sport_type in elapsed_types:
+        return elapsed_time if elapsed_time else moving_time
+
+    return moving_time if moving_time else elapsed_time
+
 def write_test_row(access_token):
     file_id = os.getenv("EXCEL_FILE_ID")
 
@@ -312,7 +325,8 @@ def write_test_row(access_token):
 
     datum = format_strava_date(start_date_local)
     cas = format_strava_time(start_date_local)
-    delka = format_hhmmss(detail.get("moving_time", 0))
+    delka_seconds = get_activity_duration_seconds(detail)
+    delka = format_hhmmss(delka_seconds)
 
     tf_prumer = detail.get("average_heartrate")
     tf_max = detail.get("max_heartrate")
@@ -429,7 +443,8 @@ def write_activity_by_id(access_token, activity_id):
 
     datum = format_strava_date(start_date_local)
     cas = format_strava_time(start_date_local)
-    delka = format_hhmmss(detail.get("moving_time", 0))
+   delka_seconds = get_activity_duration_seconds(detail)
+   delka = format_hhmmss(delka_seconds)
 
     tf_prumer = detail.get("average_heartrate")
     tf_max = detail.get("max_heartrate")
