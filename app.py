@@ -1223,87 +1223,36 @@ def sync_missing_activities():
             "<p>Neni co doplnit. Vsechny posledni aktivity uz v Excelu jsou.</p>"
         )
 
-    # 6) Batch max 3 aktivity, od nejstarsi k nejnovejsi
-    batch = list(reversed(missing))[:3]
+    # 6) Vzit jen jednu nejstarsi chybejici aktivitu
+    target = list(reversed(missing))[0]
+    activity_id = str(target.get("id", "")).strip()
 
-    written_count = 0
-    duplicate_count = 0
-    error_count = 0
-    results = []
-
-    for act in batch:
-        act_id = str(act.get("id", "")).strip()
-
-        # prubezna ochrana i v ramci jednoho behu
-        if act_id in existing_ids:
-            duplicate_count += 1
-            results.append({
-                "id": act_id,
-                "name": act.get("name", ""),
-                "sport_type": act.get("sport_type", ""),
-                "status": "duplicate",
-                "message": "Aktivita uz byla mezitim v seznamu existing_ids.",
-            })
-            continue
-
-        result = write_activity_by_id(ms_access_token, act_id)
-
-        if isinstance(result, dict) and result.get("status") == "duplicate":
-            duplicate_count += 1
-            existing_ids.add(act_id)
-            results.append({
-                "id": act_id,
-                "name": act.get("name", ""),
-                "sport_type": act.get("sport_type", ""),
-                "status": "duplicate",
-                "message": result.get("message", ""),
-            })
-        elif isinstance(result, dict) and result.get("error"):
-            error_count += 1
-            results.append({
-                "id": act_id,
-                "name": act.get("name", ""),
-                "sport_type": act.get("sport_type", ""),
-                "status": "error",
-                "message": result.get("error", ""),
-            })
-        else:
-            written_count += 1
-            existing_ids.add(act_id)
-            results.append({
-                "id": act_id,
-                "name": act.get("name", ""),
-                "sport_type": act.get("sport_type", ""),
-                "status": "written",
-                "message": "",
-            })
+    result = write_activity_by_id(ms_access_token, activity_id)
 
     # 7) Vystup
     html = "<h1>Strv Excel Projekt</h1>"
     html += f"<p>Nalezeno chybejicich aktivit mezi poslednimi 10: {total_missing_found}</p>"
-    html += f"<p>Zpracovany batch: {len(batch)}</p>"
-    html += f"<p>Zapsano: {written_count}</p>"
-    html += f"<p>Duplicity: {duplicate_count}</p>"
-    html += f"<p>Chyby: {error_count}</p>"
+    html += "<p>Zpracovana byla 1 nejstarsi chybejici aktivita.</p>"
     html += "<ul>"
 
-    for item in results:
-        act_id = item.get("id", "")
-        sport_type = item.get("sport_type", "")
-        name = item.get("name", "")
-        status = item.get("status", "")
-        message = item.get("message", "")
+    if isinstance(result, dict) and result.get("status") == "duplicate":
+        status = "duplicate"
+        detail = result.get("message", "")
+    elif isinstance(result, dict) and result.get("error"):
+        status = "error"
+        detail = result.get("error", "")
+    else:
+        status = "zapsano"
+        detail = ""
 
-        html += (
-            f"<li>ID: {act_id} | Typ: {sport_type} | "
-            f"Nazev: {name} | Stav: {status}"
-        )
-        if message:
-            html += f" | Detail: {message}"
-        html += "</li>"
+    html += (
+        f"<li>ID: {activity_id} | Typ: {target.get('sport_type', '')} | "
+        f"Nazev: {target.get('name', '')} | Stav: {status}"
+    )
+    if detail:
+        html += f" | Detail: {detail}"
+    html += "</li></ul>"
 
-    html += "</ul>"
     return html
-
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=10000)
