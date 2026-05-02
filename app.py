@@ -218,7 +218,9 @@ def format_strava_date(date_str):
     if not date_str:
         return ""
     dt = datetime.fromisoformat(date_str.replace("Z", "+00:00"))
-    return dt.strftime("%d.%m.%Y")
+    excel_epoch = datetime(1899, 12, 30, tzinfo=dt.tzinfo)
+    delta = dt - excel_epoch
+    return delta.days + (delta.seconds / 86400)
 
 def format_strava_time(date_str):
     if not date_str:
