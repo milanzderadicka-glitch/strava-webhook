@@ -627,561 +627,562 @@ def home():
         f"<p>Strava ID aktivity: {activity_id}</p>"
         f"{zone_html}"
     )
-@app.route("/test-ms")
-def test_ms():
-    token_data = get_microsoft_token()
-    access_token = token_data.get("access_token")
-
-    if access_token:
-        return (
-            "<h1>Strv Excel Projekt</h1>"
-            "<p>Microsoft prihlaseni funguje.</p>"
-            "<p>Access token byl uspesne ziskan.</p>"
-        )
-    else:
-        return f"Microsoft prihlaseni selhalo. Odpoved: {token_data}"
-
-@app.route("/test-drive")
-def test_drive():
-    token_data = get_microsoft_token()
-    access_token = token_data.get("access_token")
-
-    if not access_token:
-        return f"Microsoft prihlaseni selhalo. Odpoved: {token_data}"
-
-    drive_data = get_drive_info(access_token)
-
-    drive_id = drive_data.get("id")
-    drive_type = drive_data.get("driveType")
-    owner = drive_data.get("owner", {})
-    user = owner.get("user", {})
-    display_name = user.get("displayName", "")
-
-    if drive_id:
-        return (
-            "<h1>Strv Excel Projekt</h1>"
-            "<p>Pristup k OneDrivu funguje.</p>"
-            f"<p>Drive ID: {drive_id}</p>"
-            f"<p>Drive type: {drive_type}</p>"
-            f"<p>Vlastnik: {display_name}</p>"
-        )
-    else:
-        return f"Pristup k OneDrivu selhal. Odpoved: {drive_data}"
-
-@app.route("/login-ms")
-def login_ms():
-    return redirect(get_microsoft_auth_url())
-
-
-@app.route("/ms-callback")
-def ms_callback():
-    code = request.args.get("code")
-
-    if not code:
-        return "Microsoft nevratil autorizacni kod."
-
-    token_data = exchange_microsoft_code(code)
-
-    access_token = token_data.get("access_token")
-    refresh_token = token_data.get("refresh_token")
-
-    if access_token and refresh_token:
-        return (
-        "Microsoft prihlaseni probehlo uspesne.<br>"
-        "Access token i refresh token byly ziskany."
-    )
-    else:
-        return f"Ziskani Microsoft tokenu selhalo. Odpoved: {token_data}"
-
-@app.route("/test-ms-refresh")
-def test_ms_refresh():
-    token_data = refresh_microsoft_token()
-
-    access_token = token_data.get("access_token")
-    new_refresh_token = token_data.get("refresh_token")
-
-    if access_token and new_refresh_token:
-        return (
-            "<h1>Strv Excel Projekt</h1>"
-            "<p>Microsoft refresh token funguje.</p>"
-            "<p>Novy access token i novy refresh token byly ziskany.</p>"
-        )
-    else:
-        return f"Obnoveni Microsoft tokenu selhalo. Odpoved: {token_data}"
-
-@app.route("/test-drive-refresh")
-def test_drive_refresh():
-    token_data = refresh_microsoft_token()
-
-    access_token = token_data.get("access_token")
-
-    if not access_token:
-        return f"Obnoveni Microsoft tokenu selhalo. Odpoved: {token_data}"
-
-    drive_data = get_drive_info(access_token)
-
-    drive_id = drive_data.get("id")
-    drive_type = drive_data.get("driveType")
-    owner = drive_data.get("owner", {})
-    user = owner.get("user", {})
-    display_name = user.get("displayName", "")
-
-    if drive_id:
-        return (
-            "<h1>Strv Excel Projekt</h1>"
-            "<p>Pristup k OneDrivu pres refresh token funguje.</p>"
-            f"<p>Drive ID: {drive_id}</p>"
-            f"<p>Drive type: {drive_type}</p>"
-            f"<p>Vlastnik: {display_name}</p>"
-        )
-    else:
-        return f"Pristup k OneDrivu pres refresh token selhal. Odpoved: {drive_data}"
-
-@app.route("/test-excel-link")
-def test_excel_link():
-    excel_url = os.getenv("EXCEL_SHARE_URL")
-
-    if excel_url:
-        return (
-            "<h1>Strv Excel Projekt</h1>"
-            "<p>EXCEL_SHARE_URL je ulozeny.</p>"
-            f"<p>{excel_url}</p>"
-        )
-    else:
-        return "EXCEL_SHARE_URL neni ulozeny."
-@app.route("/test-shared-file")
-def test_shared_file():
-    token_data = refresh_microsoft_token()
-
-    access_token = token_data.get("access_token")
-
-    if not access_token:
-        return f"Obnoveni Microsoft tokenu selhalo. Odpoved: {token_data}"
-
-    file_data = get_shared_file_info(access_token)
-
-    file_name = file_data.get("name")
-    file_id = file_data.get("id")
-    web_url = file_data.get("webUrl")
-
-    if file_id:
-        return (
-            "<h1>Strv Excel Projekt</h1>"
-            "<p>Soubor byl nalezen pres sdileny odkaz.</p>"
-            f"<p>Nazev: {file_name}</p>"
-            f"<p>ID souboru: {file_id}</p>"
-            f"<p>Web URL: {web_url}</p>"
-        )
-    else:
-        return f"Nepodarilo se nacist metadata souboru. Odpoved: {file_data}"
-
-@app.route("/test-file-id")
-def test_file_id():
-    token_data = refresh_microsoft_token()
-
-    access_token = token_data.get("access_token")
-
-    if not access_token:
-        return f"Obnoveni Microsoft tokenu selhalo. Odpoved: {token_data}"
-
-    file_data = get_file_info_by_id(access_token)
-
-    file_name = file_data.get("name")
-    file_id = file_data.get("id")
-    web_url = file_data.get("webUrl")
-
-    if file_id:
-        return (
-            "<h1>Strv Excel Projekt</h1>"
-            "<p>Soubor byl nalezen pres EXCEL_FILE_ID.</p>"
-            f"<p>Nazev: {file_name}</p>"
-            f"<p>ID souboru: {file_id}</p>"
-            f"<p>Web URL: {web_url}</p>"
-        )
-    else:
-        return f"Nepodarilo se nacist metadata souboru pres ID. Odpoved: {file_data}"
-
-@app.route("/test-worksheets")
-def test_worksheets():
-    token_data = refresh_microsoft_token()
-
-    access_token = token_data.get("access_token")
-
-    if not access_token:
-        return f"Obnoveni Microsoft tokenu selhalo. Odpoved: {token_data}"
-
-    sheets_data = get_workbook_worksheets(access_token)
-    sheets = sheets_data.get("value", [])
-
-    if sheets:
-        html = "<h1>Strv Excel Projekt</h1><p>Seznam listu workbooku:</p><ul>"
-        for sheet in sheets:
-            html += f"<li>{sheet.get('name')}</li>"
-        html += "</ul>"
-        return html
-    else:
-        return f"Nepodarilo se nacist listy workbooku. Odpoved: {sheets_data}"
-
-@app.route("/test-headers")
-def test_headers():
-    token_data = refresh_microsoft_token()
-
-    access_token = token_data.get("access_token")
-
-    if not access_token:
-        return f"Obnoveni Microsoft tokenu selhalo. Odpoved: {token_data}"
-
-    headers_data = get_parametry_headers(access_token)
-    values = headers_data.get("values", [])
-
-    if values and len(values) > 0:
-        html = "<h1>Strv Excel Projekt</h1><p>Hlavičky listu Parametry_tréninku:</p><ul>"
-        for header in values[0]:
-            html += f"<li>{header}</li>"
-        html += "</ul>"
-        return html
-    else:
-        return f"Nepodarilo se nacist hlavicky. Odpoved: {headers_data}"
-
-@app.route("/test-recent-rows")
-def test_recent_rows():
-    token_data = refresh_microsoft_token()
-
-    access_token = token_data.get("access_token")
-
-    if not access_token:
-        return f"Obnoveni Microsoft tokenu selhalo. Odpoved: {token_data}"
-
-    rows_data = get_parametry_recent_rows(access_token)
-    values = rows_data.get("values", [])
-
-    if values and len(values) > 0:
-        html = "<h1>Strv Excel Projekt</h1><p>Posledni nacitene radky:</p><ul>"
-        for row in values[-5:]:
-            html += f"<li>{row}</li>"
-        html += "</ul>"
-        return html
-    else:
-        return f"Nepodarilo se nacist posledni radky. Odpoved: {rows_data}"
-
-@app.route("/test-used-range")
-def test_used_range():
-    token_data = refresh_microsoft_token()
-
-    access_token = token_data.get("access_token")
-
-    if not access_token:
-        return f"Obnoveni Microsoft tokenu selhalo. Odpoved: {token_data}"
-
-    used_data = get_parametry_used_range(access_token)
-
-    address = used_data.get("address")
-    row_count = used_data.get("rowCount")
-    column_count = used_data.get("columnCount")
-
-    if address:
-        return (
-            "<h1>Strv Excel Projekt</h1>"
-            "<p>Used range listu Parametry_tréninku:</p>"
-            f"<p>Adresa: {address}</p>"
-            f"<p>Pocet radku: {row_count}</p>"
-            f"<p>Pocet sloupcu: {column_count}</p>"
-        )
-    else:
-        return f"Nepodarilo se nacist used range. Odpoved: {used_data}"
-
-@app.route("/test-last-row")
-def test_last_row():
-    token_data = refresh_microsoft_token()
-
-    access_token = token_data.get("access_token")
-
-    if not access_token:
-        return f"Obnoveni Microsoft tokenu selhalo. Odpoved: {token_data}"
-
-    row_data = get_last_parametry_row(access_token)
-    values = row_data.get("values", [])
-
-    if values and len(values) > 0:
-        return (
-            "<h1>Strv Excel Projekt</h1>"
-            "<p>Posledni skutecny radek listu Parametry_tréninku:</p>"
-            f"<p>{values[0]}</p>"
-        )
-    else:
-        return f"Nepodarilo se nacist posledni radek. Odpoved: {row_data}"
-
-@app.route("/test-next-row")
-def test_next_row():
-    last_excel_row = 4474
-    last_poradove_cislo = 4501
-
-    next_excel_row = last_excel_row + 1
-    next_poradove_cislo = last_poradove_cislo + 1
-
-    return (
-        "<h1>Strv Excel Projekt</h1>"
-        "<p>Vypocet dalsiho radku a poradi:</p>"
-        f"<p>Dalsi radek v Excelu: {next_excel_row}</p>"
-        f"<p>Dalsi poradove cislo: {next_poradove_cislo}</p>"
-    )
-
-@app.route("/test-poradove-column")
-def test_poradove_column():
-    token_data = refresh_microsoft_token()
-
-    access_token = token_data.get("access_token")
-
-    if not access_token:
-        return f"Obnoveni Microsoft tokenu selhalo. Odpoved: {token_data}"
-
-    col_data = get_parametry_poradove_column(access_token)
-    values = col_data.get("values", [])
-
-    if values and len(values) > 0:
-        html = "<h1>Strv Excel Projekt</h1><p>Konec sloupce Pořadové číslo:</p><ul>"
-        for row in values[-10:]:
-            html += f"<li>{row}</li>"
-        html += "</ul>"
-        return html
-    else:
-        return f"Nepodarilo se nacist sloupec A. Odpoved: {col_data}"
-
-@app.route("/test-find-last-poradove")
-def test_find_last_poradove():
-    token_data = refresh_microsoft_token()
-
-    access_token = token_data.get("access_token")
-
-    if not access_token:
-        return f"Obnoveni Microsoft tokenu selhalo. Odpoved: {token_data}"
-
-    col_data = get_parametry_poradove_column(access_token)
-    values = col_data.get("values", [])
-
-    excel_row, poradove_cislo = find_last_filled_poradove_row(values, start_row=2)
-
-    if excel_row and poradove_cislo:
-        return (
-            "<h1>Strv Excel Projekt</h1>"
-            "<p>Posledni skutecne vyplneny radek podle sloupce Pořadové číslo:</p>"
-            f"<p>Radek v Excelu: {excel_row}</p>"
-            f"<p>Posledni poradove cislo: {poradove_cislo}</p>"
-        )
-    else:
-        return "Nepodarilo se najit posledni vyplneny radek podle sloupce A."
-
-@app.route("/test-next-from-poradove")
-def test_next_from_poradove():
-    token_data = refresh_microsoft_token()
-
-    access_token = token_data.get("access_token")
-
-    if not access_token:
-        return f"Obnoveni Microsoft tokenu selhalo. Odpoved: {token_data}"
-
-    col_data = get_parametry_poradove_column(access_token)
-    values = col_data.get("values", [])
-
-    excel_row, poradove_cislo = find_last_filled_poradove_row(values, start_row=2)
-
-    if excel_row and poradove_cislo:
-        next_excel_row = excel_row + 1
-        next_poradove_cislo = int(poradove_cislo) + 1
-
-        return (
-            "<h1>Strv Excel Projekt</h1>"
-            "<p>Dalsi hodnoty vypoctene z Pořadového čísla:</p>"
-            f"<p>Dalsi radek v Excelu: {next_excel_row}</p>"
-            f"<p>Dalsi poradove cislo: {next_poradove_cislo}</p>"
-        )
-    else:
-        return "Nepodarilo se spocitat dalsi radek a dalsi poradove cislo."
-
-@app.route("/test-write-row")
-def test_write_row():
-    token_data = refresh_microsoft_token()
-
-    access_token = token_data.get("access_token")
-
-    if not access_token:
-        return f"Obnoveni Microsoft tokenu selhalo. Odpoved: {token_data}"
-
-    result = write_test_row(access_token)
-
-    if isinstance(result, dict) and result.get("status") == "duplicate":
-        return (
-            "<h1>Strv Excel Projekt</h1>"
-            "<p>Duplicitni ochrana zafungovala.</p>"
-            f"<p>{result.get('message')}</p>"
-            f"<p>Strava ID: {result.get('strava_id')}</p>"
-        )
-
-    return (
-        "<h1>Strv Excel Projekt</h1>"
-        "<p>Test zapisove route probehl.</p>"
-        f"<p>Odpoved: {result}</p>"
-    )
-
-@app.route("/test-strava-id-column")
-def test_strava_id_column():
-    token_data = refresh_microsoft_token()
-
-    access_token = token_data.get("access_token")
-
-    if not access_token:
-        return f"Obnoveni Microsoft tokenu selhalo. Odpoved: {token_data}"
-
-    col_data = get_parametry_strava_id_column(access_token)
-    values = col_data.get("values", [])
-
-    if values and len(values) > 0:
-        html = "<h1>Strv Excel Projekt</h1><p>Konec sloupce Strava ID:</p><ul>"
-        for row in values[-10:]:
-            html += f"<li>{row}</li>"
-        html += "</ul>"
-        return html
-    else:
-        return f"Nepodarilo se nacist sloupec Strava ID. Odpoved: {col_data}"
-
-@app.route("/test-find-last-strava-id")
-def test_find_last_strava_id():
-    token_data = refresh_microsoft_token()
-
-    access_token = token_data.get("access_token")
-
-    if not access_token:
-        return f"Obnoveni Microsoft tokenu selhalo. Odpoved: {token_data}"
-
-    col_data = get_parametry_strava_id_column(access_token)
-    values = col_data.get("values", [])
-
-    excel_row, strava_id = find_last_filled_strava_id_row(values, start_row=2)
-
-    if excel_row and strava_id:
-        return (
-            "<h1>Strv Excel Projekt</h1>"
-            "<p>Posledni vyplnene Strava ID:</p>"
-            f"<p>Radek v Excelu: {excel_row}</p>"
-            f"<p>Strava ID: {strava_id}</p>"
-        )
-    else:
-        return "Nepodarilo se najit posledni vyplnene Strava ID."
-
-@app.route("/test-existing-strava-ids")
-def test_existing_strava_ids():
-    token_data = refresh_microsoft_token()
-
-    access_token = token_data.get("access_token")
-
-    if not access_token:
-        return f"Obnoveni Microsoft tokenu selhalo. Odpoved: {token_data}"
-
-    col_data = get_parametry_strava_id_column(access_token)
-    values = col_data.get("values", [])
-
-    ids = get_existing_strava_ids(values)
-    sample_ids = list(ids)[:10]
-
-    html = "<h1>Strv Excel Projekt</h1>"
-    html += f"<p>Pocet existujicich Strava ID: {len(ids)}</p>"
-    html += "<p>Ukazka ID:</p><ul>"
-    for item in sample_ids:
-        html += f"<li>{item}</li>"
-    html += "</ul>"
-
-    return html
-
-@app.route("/test-recent-activities-limit")
-def test_recent_activities_limit():
-    strava_token_data = get_access_token()
-    strava_access_token = strava_token_data.get("access_token")
-
-    if not strava_access_token:
-        return f"Nepodarilo se ziskat Strava access token. Odpoved: {strava_token_data}"
-
-    activities = get_recent_activities_limit(strava_access_token, per_page=10)
-
-    if isinstance(activities, list) and len(activities) > 0:
-        html = "<h1>Strv Excel Projekt</h1><p>Poslednich 10 aktivit ze Stravy:</p><ul>"
-        for act in activities:
-            html += f"<li>ID: {act.get('id')} | Typ: {act.get('sport_type')} | Nazev: {act.get('name')}</li>"
-        html += "</ul>"
-        return html
-
-    return f"Nepodarilo se nacist vice aktivit. Odpoved: {activities}"
-
-@app.route("/test-missing-activities")
-def test_missing_activities():
-    # 1) Strava token
-    strava_token_data = get_access_token()
-    strava_access_token = strava_token_data.get("access_token")
-
-    if not strava_access_token:
-        return f"Nepodarilo se ziskat Strava access token. Odpoved: {strava_token_data}"
-
-    # 2) Microsoft token
-    ms_token_data = refresh_microsoft_token()
-    ms_access_token = ms_token_data.get("access_token")
-
-    if not ms_access_token:
-        return f"Nepodarilo se ziskat Microsoft access token. Odpoved: {ms_token_data}"
-
-    # 3) Poslednich 10 aktivit ze Stravy
-    activities = get_recent_activities_limit(strava_access_token, per_page=10)
-    if not isinstance(activities, list):
-        return f"Strava nevratila seznam aktivit. Odpoved: {activities}"
-
-    # 4) Existujici Strava ID z Excelu
-    col_data = get_parametry_strava_id_column(ms_access_token)
-    values = col_data.get("values", [])
-    existing_ids = get_existing_strava_ids(values)
-
-    # 5) Najit chybejici aktivity
-    missing = []
-    for act in activities:
-        act_id = str(act.get("id", "")).strip()
-        if act_id and act_id not in existing_ids:
-            missing.append(act)
-
-    html = "<h1>Strv Excel Projekt</h1>"
-    html += f"<p>Pocet chybejicich aktivit mezi poslednimi 10: {len(missing)}</p>"
-
-    if missing:
-        html += "<p>Chybejici aktivity:</p><ul>"
-        for act in missing:
-            html += f"<li>ID: {act.get('id')} | Typ: {act.get('sport_type')} | Nazev: {act.get('name')}</li>"
-        html += "</ul>"
-    else:
-        html += "<p>Mezi poslednimi 10 aktivitami neni nic k doplneni.</p>"
-
-    return html
-
-@app.route("/test-write-specific-activity")
-def test_write_specific_activity():
-    ms_token_data = refresh_microsoft_token()
-    ms_access_token = ms_token_data.get("access_token")
-
-    if not ms_access_token:
-        return f"Nepodarilo se ziskat Microsoft access token. Odpoved: {ms_token_data}"
-
-    activity_id = 18269768179  # konkretni chybejici aktivita ze seznamu
-    result = write_activity_by_id(ms_access_token, activity_id)
-
-    if isinstance(result, dict) and result.get("status") == "duplicate":
-        return (
-            "<h1>Strv Excel Projekt</h1>"
-            "<p>Duplicitni ochrana zafungovala.</p>"
-            f"<p>{result.get('message')}</p>"
-            f"<p>Strava ID: {result.get('strava_id')}</p>"
-        )
-
-    return (
-        "<h1>Strv Excel Projekt</h1>"
-        "<p>Test zapisu konkretni aktivity probehl.</p>"
-        f"<p>Odpoved: {result}</p>"
-    )
-
+# ===== TEST ROUTES - DOCASNE VYPNUTO =====
+#@app.route("/test-ms")
+#def test_ms():
+#    token_data = get_microsoft_token()
+#    access_token = token_data.get("access_token")
+#
+#    if access_token:
+#        return (
+#            "<h1>Strv Excel Projekt</h1>"
+#            "<p>Microsoft prihlaseni funguje.</p>"
+#            "<p>Access token byl uspesne ziskan.</p>"
+#        )
+#    else:
+#        return f"Microsoft prihlaseni selhalo. Odpoved: {token_data}"
+#
+#@app.route("/test-drive")
+#def test_drive():
+#    token_data = get_microsoft_token()
+#    access_token = token_data.get("access_token")
+#
+#    if not access_token:
+#        return f"Microsoft prihlaseni selhalo. Odpoved: {token_data}"
+#
+#    drive_data = get_drive_info(access_token)
+#
+#    drive_id = drive_data.get("id")
+#    drive_type = drive_data.get("driveType")
+#    owner = drive_data.get("owner", {})
+#    user = owner.get("user", {})
+#    display_name = user.get("displayName", "")
+#
+#    if drive_id:
+#        return (
+#            "<h1>Strv Excel Projekt</h1>"
+#            "<p>Pristup k OneDrivu funguje.</p>"
+#            f"<p>Drive ID: {drive_id}</p>"
+#            f"<p>Drive type: {drive_type}</p>"
+#            f"<p>Vlastnik: {display_name}</p>"
+#        )
+#    else:
+#        return f"Pristup k OneDrivu selhal. Odpoved: {drive_data}"
+#
+#@app.route("/login-ms")
+#def login_ms():
+#    return redirect(get_microsoft_auth_url())
+#
+#
+#@app.route("/ms-callback")
+#def ms_callback():
+#    code = request.args.get("code")
+#
+#    if not code:
+#        return "Microsoft nevratil autorizacni kod."
+#
+#    token_data = exchange_microsoft_code(code)
+#
+#    access_token = token_data.get("access_token")
+#    refresh_token = token_data.get("refresh_token")
+#
+#    if access_token and refresh_token:
+#        return (
+#        "Microsoft prihlaseni probehlo uspesne.<br>"
+#        "Access token i refresh token byly ziskany."
+#    )
+#    else:
+#        return f"Ziskani Microsoft tokenu selhalo. Odpoved: {token_data}"
+#
+#@app.route("/test-ms-refresh")
+#def test_ms_refresh():
+#    token_data = refresh_microsoft_token()
+#
+#    access_token = token_data.get("access_token")
+#    new_refresh_token = token_data.get("refresh_token")
+#
+#    if access_token and new_refresh_token:
+#        return (
+#            "<h1>Strv Excel Projekt</h1>"
+#            "<p>Microsoft refresh token funguje.</p>"
+#            "<p>Novy access token i novy refresh token byly ziskany.</p>"
+#        )
+#    else:
+#        return f"Obnoveni Microsoft tokenu selhalo. Odpoved: {token_data}"
+#
+#@app.route("/test-drive-refresh")
+#def test_drive_refresh():
+#    token_data = refresh_microsoft_token()
+#
+#    access_token = token_data.get("access_token")
+#
+#    if not access_token:
+#        return f"Obnoveni Microsoft tokenu selhalo. Odpoved: {token_data}"
+#
+#    drive_data = get_drive_info(access_token)
+#
+#    drive_id = drive_data.get("id")
+#    drive_type = drive_data.get("driveType")
+#    owner = drive_data.get("owner", {})
+#    user = owner.get("user", {})
+#    display_name = user.get("displayName", "")
+#
+#    if drive_id:
+#        return (
+#            "<h1>Strv Excel Projekt</h1>"
+#            "<p>Pristup k OneDrivu pres refresh token funguje.</p>"
+#            f"<p>Drive ID: {drive_id}</p>"
+#            f"<p>Drive type: {drive_type}</p>"
+#            f"<p>Vlastnik: {display_name}</p>"
+#        )
+#    else:
+#        return f"Pristup k OneDrivu pres refresh token selhal. Odpoved: {drive_data}"
+#
+#@app.route("/test-excel-link")
+#def test_excel_link():
+#    excel_url = os.getenv("EXCEL_SHARE_URL")
+#
+#    if excel_url:
+#        return (
+#            "<h1>Strv Excel Projekt</h1>"
+#            "<p>EXCEL_SHARE_URL je ulozeny.</p>"
+#            f"<p>{excel_url}</p>"
+#        )
+#    else:
+#        return "EXCEL_SHARE_URL neni ulozeny."
+#@app.route("/test-shared-file")
+#def test_shared_file():
+#    token_data = refresh_microsoft_token()
+#
+#    access_token = token_data.get("access_token")
+#
+#    if not access_token:
+#        return f"Obnoveni Microsoft tokenu selhalo. Odpoved: {token_data}"
+#
+#    file_data = get_shared_file_info(access_token)
+#
+#    file_name = file_data.get("name")
+#    file_id = file_data.get("id")
+#    web_url = file_data.get("webUrl")
+#
+#    if file_id:
+#        return (
+#            "<h1>Strv Excel Projekt</h1>"
+#            "<p>Soubor byl nalezen pres sdileny odkaz.</p>"
+#            f"<p>Nazev: {file_name}</p>"
+#            f"<p>ID souboru: {file_id}</p>"
+#            f"<p>Web URL: {web_url}</p>"
+#        )
+#    else:
+#        return f"Nepodarilo se nacist metadata souboru. Odpoved: {file_data}"
+#
+#@app.route("/test-file-id")
+#def test_file_id():
+#    token_data = refresh_microsoft_token()
+#
+#    access_token = token_data.get("access_token")
+#
+#    if not access_token:
+#        return f"Obnoveni Microsoft tokenu selhalo. Odpoved: {token_data}"
+#
+#    file_data = get_file_info_by_id(access_token)
+#
+#    file_name = file_data.get("name")
+#    file_id = file_data.get("id")
+#    web_url = file_data.get("webUrl")
+#
+#    if file_id:
+#        return (
+#            "<h1>Strv Excel Projekt</h1>"
+#            "<p>Soubor byl nalezen pres EXCEL_FILE_ID.</p>"
+#            f"<p>Nazev: {file_name}</p>"
+#            f"<p>ID souboru: {file_id}</p>"
+#            f"<p>Web URL: {web_url}</p>"
+#        )
+#    else:
+#        return f"Nepodarilo se nacist metadata souboru pres ID. Odpoved: {file_data}"
+#
+#@app.route("/test-worksheets")
+#def test_worksheets():
+#    token_data = refresh_microsoft_token()
+#
+#    access_token = token_data.get("access_token")
+#
+#    if not access_token:
+#        return f"Obnoveni Microsoft tokenu selhalo. Odpoved: {token_data}"
+#
+#    sheets_data = get_workbook_worksheets(access_token)
+#    sheets = sheets_data.get("value", [])
+#
+#    if sheets:
+#        html = "<h1>Strv Excel Projekt</h1><p>Seznam listu workbooku:</p><ul>"
+#        for sheet in sheets:
+#            html += f"<li>{sheet.get('name')}</li>"
+#        html += "</ul>"
+#        return html
+#    else:
+#        return f"Nepodarilo se nacist listy workbooku. Odpoved: {sheets_data}"
+#
+#@app.route("/test-headers")
+#def test_headers():
+#    token_data = refresh_microsoft_token()
+#
+#    access_token = token_data.get("access_token")
+#
+#    if not access_token:
+#        return f"Obnoveni Microsoft tokenu selhalo. Odpoved: {token_data}"
+#
+#    headers_data = get_parametry_headers(access_token)
+#    values = headers_data.get("values", [])
+#
+#    if values and len(values) > 0:
+#        html = "<h1>Strv Excel Projekt</h1><p>Hlavičky listu Parametry_tréninku:</p><ul>"
+#        for header in values[0]:
+#            html += f"<li>{header}</li>"
+#        html += "</ul>"
+#        return html
+#    else:
+#        return f"Nepodarilo se nacist hlavicky. Odpoved: {headers_data}"
+#
+#@app.route("/test-recent-rows")
+#def test_recent_rows():
+#    token_data = refresh_microsoft_token()
+#
+#    access_token = token_data.get("access_token")
+#
+#    if not access_token:
+#        return f"Obnoveni Microsoft tokenu selhalo. Odpoved: {token_data}"
+#
+#    rows_data = get_parametry_recent_rows(access_token)
+#    values = rows_data.get("values", [])
+#
+#    if values and len(values) > 0:
+#        html = "<h1>Strv Excel Projekt</h1><p>Posledni nacitene radky:</p><ul>"
+#        for row in values[-5:]:
+#            html += f"<li>{row}</li>"
+#        html += "</ul>"
+#        return html
+#    else:
+#        return f"Nepodarilo se nacist posledni radky. Odpoved: {rows_data}"
+#
+#@app.route("/test-used-range")
+#def test_used_range():
+#    token_data = refresh_microsoft_token()
+#
+#    access_token = token_data.get("access_token")
+#
+#    if not access_token:
+#        return f"Obnoveni Microsoft tokenu selhalo. Odpoved: {token_data}"
+#
+#    used_data = get_parametry_used_range(access_token)
+#
+#    address = used_data.get("address")
+#    row_count = used_data.get("rowCount")
+#    column_count = used_data.get("columnCount")
+#
+#    if address:
+#        return (
+#            "<h1>Strv Excel Projekt</h1>"
+#            "<p>Used range listu Parametry_tréninku:</p>"
+#            f"<p>Adresa: {address}</p>"
+#            f"<p>Pocet radku: {row_count}</p>"
+#            f"<p>Pocet sloupcu: {column_count}</p>"
+#        )
+#    else:
+#        return f"Nepodarilo se nacist used range. Odpoved: {used_data}"
+#
+#@app.route("/test-last-row")
+#def test_last_row():
+#    token_data = refresh_microsoft_token()
+#
+#    access_token = token_data.get("access_token")
+#
+#    if not access_token:
+#        return f"Obnoveni Microsoft tokenu selhalo. Odpoved: {token_data}"
+#
+#    row_data = get_last_parametry_row(access_token)
+#    values = row_data.get("values", [])
+#
+#    if values and len(values) > 0:
+#        return (
+#            "<h1>Strv Excel Projekt</h1>"
+#            "<p>Posledni skutecny radek listu Parametry_tréninku:</p>"
+#            f"<p>{values[0]}</p>"
+#        )
+#    else:
+#        return f"Nepodarilo se nacist posledni radek. Odpoved: {row_data}"
+#
+#@app.route("/test-next-row")
+#def test_next_row():
+#    last_excel_row = 4474
+#    last_poradove_cislo = 4501
+#
+#    next_excel_row = last_excel_row + 1
+#    next_poradove_cislo = last_poradove_cislo + 1
+#
+#    return (
+#        "<h1>Strv Excel Projekt</h1>"
+#        "<p>Vypocet dalsiho radku a poradi:</p>"
+#        f"<p>Dalsi radek v Excelu: {next_excel_row}</p>"
+#        f"<p>Dalsi poradove cislo: {next_poradove_cislo}</p>"
+#    )
+#
+#@app.route("/test-poradove-column")
+#def test_poradove_column():
+#   token_data = refresh_microsoft_token()
+#
+#    access_token = token_data.get("access_token")
+#
+#    if not access_token:
+#        return f"Obnoveni Microsoft tokenu selhalo. Odpoved: {token_data}"
+#
+#    col_data = get_parametry_poradove_column(access_token)
+#    values = col_data.get("values", [])
+#
+#    if values and len(values) > 0:
+#        html = "<h1>Strv Excel Projekt</h1><p>Konec sloupce Pořadové číslo:</p><ul>"
+#        for row in values[-10:]:
+#            html += f"<li>{row}</li>"
+#        html += "</ul>"
+#        return html
+#    else:
+#        return f"Nepodarilo se nacist sloupec A. Odpoved: {col_data}"
+#
+#@app.route("/test-find-last-poradove")
+#def test_find_last_poradove():
+#    token_data = refresh_microsoft_token()
+#
+#    access_token = token_data.get("access_token")
+#
+#    if not access_token:
+#        return f"Obnoveni Microsoft tokenu selhalo. Odpoved: {token_data}"
+#
+#    col_data = get_parametry_poradove_column(access_token)
+#    values = col_data.get("values", [])
+#
+#    excel_row, poradove_cislo = find_last_filled_poradove_row(values, start_row=2)
+#
+#    if excel_row and poradove_cislo:
+#        return (
+#            "<h1>Strv Excel Projekt</h1>"
+#            "<p>Posledni skutecne vyplneny radek podle sloupce Pořadové číslo:</p>"
+#            f"<p>Radek v Excelu: {excel_row}</p>"
+#            f"<p>Posledni poradove cislo: {poradove_cislo}</p>"
+#        )
+#    else:
+#        return "Nepodarilo se najit posledni vyplneny radek podle sloupce A."
+#
+#@app.route("/test-next-from-poradove")
+#def test_next_from_poradove():
+#    token_data = refresh_microsoft_token()
+#
+#    access_token = token_data.get("access_token")
+#
+#    if not access_token:
+#        return f"Obnoveni Microsoft tokenu selhalo. Odpoved: {token_data}"
+#
+#    col_data = get_parametry_poradove_column(access_token)
+#    values = col_data.get("values", [])
+#
+#    excel_row, poradove_cislo = find_last_filled_poradove_row(values, start_row=2)
+#
+#    if excel_row and poradove_cislo:
+#        next_excel_row = excel_row + 1
+#        next_poradove_cislo = int(poradove_cislo) + 1
+#
+x        return (
+#            "<h1>Strv Excel Projekt</h1>"
+#            "<p>Dalsi hodnoty vypoctene z Pořadového čísla:</p>"
+#            f"<p>Dalsi radek v Excelu: {next_excel_row}</p>"
+#            f"<p>Dalsi poradove cislo: {next_poradove_cislo}</p>"
+#        )
+#    else:
+#        return "Nepodarilo se spocitat dalsi radek a dalsi poradove cislo."
+#
+#@app.route("/test-write-row")
+#def test_write_row():
+#    token_data = refresh_microsoft_token()
+#
+#    access_token = token_data.get("access_token")
+#
+#    if not access_token:
+#        return f"Obnoveni Microsoft tokenu selhalo. Odpoved: {token_data}"
+#
+#    result = write_test_row(access_token)
+#
+#    if isinstance(result, dict) and result.get("status") == "duplicate":
+#        return (
+#            "<h1>Strv Excel Projekt</h1>"
+#            "<p>Duplicitni ochrana zafungovala.</p>"
+#            f"<p>{result.get('message')}</p>"
+#            f"<p>Strava ID: {result.get('strava_id')}</p>"
+#        )
+#
+#    return (
+#        "<h1>Strv Excel Projekt</h1>"
+#        "<p>Test zapisove route probehl.</p>"
+#        f"<p>Odpoved: {result}</p>"
+#    )
+#
+#@app.route("/test-strava-id-column")
+#def test_strava_id_column():
+#    token_data = refresh_microsoft_token()
+#
+#    access_token = token_data.get("access_token")
+#
+#    if not access_token:
+#        return f"Obnoveni Microsoft tokenu selhalo. Odpoved: {token_data}"
+#
+#    col_data = get_parametry_strava_id_column(access_token)
+#    values = col_data.get("values", [])
+#
+#    if values and len(values) > 0:
+#        html = "<h1>Strv Excel Projekt</h1><p>Konec sloupce Strava ID:</p><ul>"
+#        for row in values[-10:]:
+#            html += f"<li>{row}</li>"
+#        html += "</ul>"
+#        return html
+#    else:
+#        return f"Nepodarilo se nacist sloupec Strava ID. Odpoved: {col_data}"
+#
+#@app.route("/test-find-last-strava-id")
+#def test_find_last_strava_id():
+#    token_data = refresh_microsoft_token()
+#
+#    access_token = token_data.get("access_token")
+#
+#    if not access_token:
+#        return f"Obnoveni Microsoft tokenu selhalo. Odpoved: {token_data}"
+#
+x    col_data = get_parametry_strava_id_column(access_token)
+#    values = col_data.get("values", [])
+#
+#    excel_row, strava_id = find_last_filled_strava_id_row(values, start_row=2)
+#
+#    if excel_row and strava_id:
+#        return (
+#            "<h1>Strv Excel Projekt</h1>"
+#            "<p>Posledni vyplnene Strava ID:</p>"
+#            f"<p>Radek v Excelu: {excel_row}</p>"
+#            f"<p>Strava ID: {strava_id}</p>"
+#        )
+#    else:
+#        return "Nepodarilo se najit posledni vyplnene Strava ID."
+#
+#@app.route("/test-existing-strava-ids")
+#def test_existing_strava_ids():
+#    token_data = refresh_microsoft_token()
+#
+#    access_token = token_data.get("access_token")
+#
+#    if not access_token:
+#        return f"Obnoveni Microsoft tokenu selhalo. Odpoved: {token_data}"
+#
+#    col_data = get_parametry_strava_id_column(access_token)
+#    values = col_data.get("values", [])
+#
+#    ids = get_existing_strava_ids(values)
+#    sample_ids = list(ids)[:10]
+#
+#    html = "<h1>Strv Excel Projekt</h1>"
+#    html += f"<p>Pocet existujicich Strava ID: {len(ids)}</p>"
+#    html += "<p>Ukazka ID:</p><ul>"
+#    for item in sample_ids:
+#        html += f"<li>{item}</li>"
+#    html += "</ul>"
+#
+#    return html
+#
+x@app.route("/test-recent-activities-limit")
+#def test_recent_activities_limit():
+#    strava_token_data = get_access_token()
+#    strava_access_token = strava_token_data.get("access_token")
+#
+#    if not strava_access_token:
+#        return f"Nepodarilo se ziskat Strava access token. Odpoved: {strava_token_data}"
+#
+#    activities = get_recent_activities_limit(strava_access_token, per_page=10)
+#
+#    if isinstance(activities, list) and len(activities) > 0:
+#        html = "<h1>Strv Excel Projekt</h1><p>Poslednich 10 aktivit ze Stravy:</p><ul>"
+#        for act in activities:
+#            html += f"<li>ID: {act.get('id')} | Typ: {act.get('sport_type')} | Nazev: {act.get('name')}</li>"
+#        html += "</ul>"
+#        return html
+#
+#    return f"Nepodarilo se nacist vice aktivit. Odpoved: {activities}"
+#
+#@app.route("/test-missing-activities")
+#def test_missing_activities():
+#    # 1) Strava token
+#    strava_token_data = get_access_token()
+#    strava_access_token = strava_token_data.get("access_token")
+#
+#    if not strava_access_token:
+#        return f"Nepodarilo se ziskat Strava access token. Odpoved: {strava_token_data}"
+#
+#    # 2) Microsoft token
+#    ms_token_data = refresh_microsoft_token()
+#    ms_access_token = ms_token_data.get("access_token")
+#
+#    if not ms_access_token:
+#        return f"Nepodarilo se ziskat Microsoft access token. Odpoved: {ms_token_data}"
+#
+#    # 3) Poslednich 10 aktivit ze Stravy
+#    activities = get_recent_activities_limit(strava_access_token, per_page=10)
+#    if not isinstance(activities, list):
+#        return f"Strava nevratila seznam aktivit. Odpoved: {activities}"
+#
+#    # 4) Existujici Strava ID z Excelu
+#    col_data = get_parametry_strava_id_column(ms_access_token)
+#    values = col_data.get("values", [])
+#    existing_ids = get_existing_strava_ids(values)
+#
+#    # 5) Najit chybejici aktivity
+#    missing = []
+#    for act in activities:
+#        act_id = str(act.get("id", "")).strip()
+#        if act_id and act_id not in existing_ids:
+#            missing.append(act)
+#
+#    html = "<h1>Strv Excel Projekt</h1>"
+#    html += f"<p>Pocet chybejicich aktivit mezi poslednimi 10: {len(missing)}</p>"
+#
+#    if missing:
+#        html += "<p>Chybejici aktivity:</p><ul>"
+#        for act in missing:
+#            html += f"<li>ID: {act.get('id')} | Typ: {act.get('sport_type')} | Nazev: {act.get('name')}</li>"
+#        html += "</ul>"
+#    else:
+#        html += "<p>Mezi poslednimi 10 aktivitami neni nic k doplneni.</p>"
+#
+#    return html
+#
+x@app.route("/test-write-specific-activity")
+#def test_write_specific_activity():
+#    ms_token_data = refresh_microsoft_token()
+#    ms_access_token = ms_token_data.get("access_token")
+#
+#    if not ms_access_token:
+#        return f"Nepodarilo se ziskat Microsoft access token. Odpoved: {ms_token_data}"
+#
+#    activity_id = 18269768179  # konkretni chybejici aktivita ze seznamu
+#    result = write_activity_by_id(ms_access_token, activity_id)
+#
+x    if isinstance(result, dict) and result.get("status") == "duplicate":
+#        return (
+#            "<h1>Strv Excel Projekt</h1>"
+#            "<p>Duplicitni ochrana zafungovala.</p>"
+#            f"<p>{result.get('message')}</p>"
+#            f"<p>Strava ID: {result.get('strava_id')}</p>"
+#        )
+#
+#    return (
+#        "<h1>Strv Excel Projekt</h1>"
+#        "<p>Test zapisu konkretni aktivity probehl.</p>"
+#        f"<p>Odpoved: {result}</p>"
+#    )
+#
 @app.route("/sync-missing-activities")
 def sync_missing_activities():
     # 1) Strava token
