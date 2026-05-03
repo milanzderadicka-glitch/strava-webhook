@@ -990,7 +990,7 @@ def home():
 #        next_excel_row = excel_row + 1
 #        next_poradove_cislo = int(poradove_cislo) + 1
 #
-x        return (
+#        return (
 #            "<h1>Strv Excel Projekt</h1>"
 #            "<p>Dalsi hodnoty vypoctene z Pořadového čísla:</p>"
 #            f"<p>Dalsi radek v Excelu: {next_excel_row}</p>"
