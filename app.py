@@ -1271,5 +1271,46 @@ def sync_missing_activities_status():
 
     return html
 
+@app.route("/strava-webhook", methods=["GET", "POST"])
+def strava_webhook():
+    verify_token = os.getenv("STRAVA_VERIFY_TOKEN")
+
+    if request.method == "GET":
+        hub_mode = request.args.get("hub.mode")
+        hub_challenge = request.args.get("hub.challenge")
+        hub_verify_token = request.args.get("hub.verify_token")
+
+        if hub_mode == "subscribe" and hub_verify_token == verify_token:
+            return {"hub.challenge": hub_challenge}, 200
+        return {"error": "Verification failed"}, 403
+
+    if request.method == "POST":
+        event = request.get_json(silent=True) or {}
+
+        object_type = event.get("object_type")
+        aspect_type = event.get("aspect_type")
+        object_id = event.get("object_id")
+
+        # bereme jen aktivity
+        if object_type != "activity" or not object_id:
+            return {"status": "ignored", "reason": "not an activity event"}, 200
+
+        # zapis konkretni aktivitu podle Strava ID
+        ms_token_data = refresh_microsoft_token()
+        ms_access_token = ms_token_data.get("access_token")
+
+        if not ms_access_token:
+            return {"status": "error", "message": "Microsoft token not available"}, 200
+
+        result = write_activity_by_id(ms_access_token, object_id)
+
+        return {
+            "status": "ok",
+            "aspect_type": aspect_type,
+            "object_type": object_type,
+            "object_id": object_id,
+            "write_result": result,
+        }, 200
+
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=10000)
