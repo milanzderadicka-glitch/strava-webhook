@@ -574,58 +574,14 @@ def get_activity_zones(access_token, activity_id):
 
 @app.route("/")
 def home():
-    token_data = get_access_token()
-    access_token = token_data.get("access_token")
-
-    if not access_token:
-        return f"Pripojeni se nepodarilo. Odpoved Stravy: {token_data}"
-
-    activities = get_recent_activities(access_token)
-
-    if not activities:
-        return "Nebyla nalezena zadna aktivita."
-
-    latest_activity = activities[0]
-    activity_id = latest_activity.get("id")
-
-    detail = get_activity_detail(access_token, activity_id)
-    zones = get_activity_zones(access_token, activity_id)
-
-    name = detail.get("name", "Bez nazvu")
-    sport_type = detail.get("sport_type", "Neznamy typ")
-    start_date = detail.get("start_date_local", "Neznamy cas")
-    distance_km = round(detail.get("distance", 0) / 1000, 2)
-    moving_time = detail.get("moving_time", 0)
-    average_heartrate = detail.get("average_heartrate", "neni")
-    max_heartrate = detail.get("max_heartrate", "neni")
-    calories = detail.get("calories", "neni")
-    elevation = detail.get("total_elevation_gain", 0)
-
-    zone_html = "<h3>Tepove zony</h3><ul>"
-
-    for zone_group in zones:
-        if zone_group.get("type") == "heartrate":
-            distribution = zone_group.get("distribution_buckets", [])
-            for i, bucket in enumerate(distribution, start=1):
-                seconds = bucket.get("time", 0)
-                zone_html += f"<li>Strava zona {i}: {seconds} s</li>"
-
-    zone_html += "</ul>"
-
     return (
         "<h1>Strv Excel Projekt</h1>"
-        "<h2>Detail posledni aktivity</h2>"
-        f"<p>Nazev: {name}</p>"
-        f"<p>Typ aktivity: {sport_type}</p>"
-        f"<p>Datum a cas: {start_date}</p>"
-        f"<p>Vzdalenost: {distance_km} km</p>"
-        f"<p>Moving time (sekundy): {moving_time}</p>"
-        f"<p>Prumerna TF: {average_heartrate}</p>"
-        f"<p>Maximalni TF: {max_heartrate}</p>"
-        f"<p>Kalorie: {calories}</p>"
-        f"<p>Stoupani: {elevation} m</p>"
-        f"<p>Strava ID aktivity: {activity_id}</p>"
-        f"{zone_html}"
+        "<p>Aplikace běží.</p>"
+        "<p>Dostupné provozní route:</p>"
+        "<ul>"
+        "<li>/sync-missing-activities</li>"
+        "<li>/sync-missing-activities-status</li>"
+        "</ul>"
     )
 # ===== TEST ROUTES - DOCASNE VYPNUTO =====
 #@app.route("/test-ms")
