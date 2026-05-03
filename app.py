@@ -1254,5 +1254,65 @@ def sync_missing_activities():
     html += "</li></ul>"
 
     return html
+
+@app.route("/sync-missing-activities-status")
+def sync_missing_activities_status():
+    # 1) Strava token
+    strava_token_data = get_access_token()
+    strava_access_token = strava_token_data.get("access_token")
+
+    if not strava_access_token:
+        return f"Nepodarilo se ziskat Strava access token. Odpoved: {strava_token_data}"
+
+    # 2) Microsoft token
+    ms_token_data = refresh_microsoft_token()
+    ms_access_token = ms_token_data.get("access_token")
+
+    if not ms_access_token:
+        return f"Nepodarilo se ziskat Microsoft access token. Odpoved: {ms_token_data}"
+
+    # 3) Poslednich 10 aktivit ze Stravy
+    activities = get_recent_activities_limit(strava_access_token, per_page=10)
+    if not isinstance(activities, list):
+        return f"Strava nevratila seznam aktivit. Odpoved: {activities}"
+
+    # 4) Existujici Strava ID z Excelu
+    col_data = get_parametry_strava_id_column(ms_access_token)
+    values = col_data.get("values", [])
+    existing_ids = get_existing_strava_ids(values)
+
+    # 5) Najit chybejici aktivity
+    missing = []
+    for act in activities:
+        act_id = str(act.get("id", "")).strip()
+        if act_id and act_id not in existing_ids:
+            missing.append(act)
+
+    html = "<h1>Strv Excel Projekt</h1>"
+    html += f"<p>Pocet chybejicich aktivit mezi poslednimi 10: {len(missing)}</p>"
+
+    if not missing:
+        html += "<p>Backlog je prazdny.</p>"
+        return html
+
+    oldest_missing = list(reversed(missing))[0]
+    html += (
+        f"<p>Nejstarsi chybejici aktivita na rade: "
+        f"ID {oldest_missing.get('id')} | "
+        f"Typ {oldest_missing.get('sport_type', '')} | "
+        f"Nazev {oldest_missing.get('name', '')}</p>"
+    )
+
+    html += "<ul>"
+    for act in missing:
+        html += (
+            f"<li>ID: {act.get('id')} | "
+            f"Typ: {act.get('sport_type', '')} | "
+            f"Nazev: {act.get('name', '')}</li>"
+        )
+    html += "</ul>"
+
+    return html
+
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=10000)
