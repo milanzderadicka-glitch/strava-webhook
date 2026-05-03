@@ -1054,7 +1054,7 @@ def home():
 #    if not access_token:
 #        return f"Obnoveni Microsoft tokenu selhalo. Odpoved: {token_data}"
 #
-x    col_data = get_parametry_strava_id_column(access_token)
+#    col_data = get_parametry_strava_id_column(access_token)
 #    values = col_data.get("values", [])
 #
 #    excel_row, strava_id = find_last_filled_strava_id_row(values, start_row=2)
@@ -1093,7 +1093,7 @@ x    col_data = get_parametry_strava_id_column(access_token)
 #
 #    return html
 #
-x@app.route("/test-recent-activities-limit")
+#@app.route("/test-recent-activities-limit")
 #def test_recent_activities_limit():
 #    strava_token_data = get_access_token()
 #    strava_access_token = strava_token_data.get("access_token")
@@ -1158,7 +1158,7 @@ x@app.route("/test-recent-activities-limit")
 #
 #    return html
 #
-x@app.route("/test-write-specific-activity")
+#@app.route("/test-write-specific-activity")
 #def test_write_specific_activity():
 #    ms_token_data = refresh_microsoft_token()
 #    ms_access_token = ms_token_data.get("access_token")
@@ -1169,7 +1169,7 @@ x@app.route("/test-write-specific-activity")
 #    activity_id = 18269768179  # konkretni chybejici aktivita ze seznamu
 #    result = write_activity_by_id(ms_access_token, activity_id)
 #
-x    if isinstance(result, dict) and result.get("status") == "duplicate":
+#    if isinstance(result, dict) and result.get("status") == "duplicate":
 #        return (
 #            "<h1>Strv Excel Projekt</h1>"
 #            "<p>Duplicitni ochrana zafungovala.</p>"
